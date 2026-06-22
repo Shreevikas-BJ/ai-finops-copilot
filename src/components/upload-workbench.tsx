@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import {
   Database,
   Download,
-  FileClock,
   FileUp,
   LoaderCircle,
   Play,
@@ -18,16 +17,19 @@ import { DatasetHistory } from "@/components/dataset-history";
 import { UploadRequirements } from "@/components/upload-requirements";
 import { UploadValidationStatus } from "@/components/upload-validation-status";
 import type { AnalyzedDatasetPayload } from "@/lib/types";
+import { REQUIRED_UPLOAD_FILE_NAMES } from "@/lib/upload-schema";
 import {
+  mergeUploadFiles,
   validateUploadFiles,
   type UploadValidationReport,
 } from "@/lib/upload-validation";
 
 type LoadingSource = "custom" | "sample" | null;
+type StartMode = "custom" | null;
 
 export function UploadWorkbench() {
   const router = useRouter();
-  const { activeDataset, history, activateDataset, clearDataset } = useActiveDataset();
+  const { activeDataset, activateDataset, clearDataset } = useActiveDataset();
   const inputRef = useRef<HTMLInputElement>(null);
   const validationRun = useRef(0);
   const [files, setFiles] = useState<File[]>([]);
@@ -36,22 +38,24 @@ export function UploadWorkbench() {
   const [validating, setValidating] = useState(false);
   const [error, setError] = useState("");
   const [loadingSource, setLoadingSource] = useState<LoadingSource>(null);
+  const [startMode, setStartMode] = useState<StartMode>(null);
 
   async function handleFiles(selectedFiles: File[]) {
+    const mergedFiles = mergeUploadFiles(files, selectedFiles);
     const run = validationRun.current + 1;
     validationRun.current = run;
-    setFiles(selectedFiles);
+    setFiles(mergedFiles);
     setError("");
     setValidation(null);
 
-    if (selectedFiles.length === 0) {
+    if (mergedFiles.length === 0) {
       setValidating(false);
       return;
     }
 
     setValidating(true);
     try {
-      const report = await validateUploadFiles(selectedFiles);
+      const report = await validateUploadFiles(mergedFiles);
       if (validationRun.current === run) setValidation(report);
     } catch {
       if (validationRun.current === run) {
@@ -76,7 +80,12 @@ export function UploadWorkbench() {
       }
 
       const body = source === "custom" ? new FormData() : undefined;
-      if (body) files.forEach((file) => body.append(file.name, file));
+      if (body) {
+        REQUIRED_UPLOAD_FILE_NAMES.forEach((name) => {
+          const file = files.find((item) => item.name === name);
+          if (file) body.append(name, file);
+        });
+      }
       const response = await fetch("/api/analyze", { method: "POST", body });
       const payload = (await response.json()) as AnalyzedDatasetPayload & { error?: string };
       if (!response.ok) throw new Error(payload.error || "Analysis failed.");
@@ -110,6 +119,9 @@ export function UploadWorkbench() {
     if (inputRef.current) inputRef.current.value = "";
   }
 
+  const readyToAnalyze =
+    Boolean(datasetName.trim()) && validation?.valid === true && !validating;
+
   return (
     <>
       {activeDataset && (
@@ -141,14 +153,14 @@ export function UploadWorkbench() {
         </div>
       )}
 
-      <div className="mb-4 grid gap-4 lg:grid-cols-3">
+      <div className="mb-4 grid gap-4 lg:grid-cols-2">
         <section className="rounded-2xl border border-emerald-400/18 bg-emerald-400/[0.045] p-5 sm:p-6">
           <span className="grid size-11 place-items-center rounded-xl bg-emerald-400/10 text-emerald-300">
             <Database className="size-5" />
           </span>
           <h2 className="mt-5 text-base font-semibold text-white">Use Sample Data</h2>
           <p className="mt-2 text-xs leading-5 text-slate-400">
-            Load the included synthetic dataset and save it to browser history.
+            Start instantly with a validated synthetic dataset and open the dashboard.
           </p>
           <div className="mt-5 flex flex-col gap-2 sm:flex-row lg:flex-col xl:flex-row">
             <button
@@ -180,32 +192,18 @@ export function UploadWorkbench() {
           </span>
           <h2 className="mt-5 text-base font-semibold text-white">Upload Custom Data</h2>
           <p className="mt-2 text-xs leading-5 text-slate-400">
-            Name the dataset, select all five files, validate them, and run analysis.
+            Name your dataset, add the five required files, review validation, then analyze.
           </p>
           <button
             type="button"
             disabled={loadingSource !== null}
-            onClick={openFilePicker}
+            aria-expanded={startMode === "custom"}
+            aria-controls="custom-upload-workspace"
+            onClick={() => setStartMode("custom")}
             className="mt-5 inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-sky-300/20 bg-sky-300/10 px-4 text-sm font-semibold text-sky-100 transition hover:bg-sky-300/15 disabled:opacity-60 sm:w-auto"
           >
-            <FileUp className="size-4" /> Select 5 files
+            <FileUp className="size-4" /> Upload Custom Data
           </button>
-        </section>
-
-        <section className="rounded-2xl border border-violet-400/18 bg-violet-400/[0.04] p-5 sm:p-6">
-          <span className="grid size-11 place-items-center rounded-xl bg-violet-400/10 text-violet-300">
-            <FileClock className="size-5" />
-          </span>
-          <h2 className="mt-5 text-base font-semibold text-white">Load from History</h2>
-          <p className="mt-2 text-xs leading-5 text-slate-400">
-            Switch the dashboard and Copilot to one of the latest three datasets.
-          </p>
-          <a
-            href="#history"
-            className="mt-5 inline-flex h-10 items-center justify-center rounded-xl border border-violet-300/20 bg-violet-300/10 px-4 text-sm font-semibold text-violet-100 hover:bg-violet-300/15"
-          >
-            View {history.length} saved dataset{history.length === 1 ? "" : "s"}
-          </a>
         </section>
       </div>
 
@@ -229,14 +227,13 @@ export function UploadWorkbench() {
         </div>
       )}
 
-      <UploadRequirements validation={validation} />
-
-      <div className="grid gap-4 xl:grid-cols-[1fr_0.9fr]">
-        <section className="rounded-2xl border border-white/[0.075] bg-[#0d1219] p-5 sm:p-6">
+      {startMode === "custom" && (
+      <div id="custom-upload-workspace" className="grid scroll-mt-24 gap-4 xl:grid-cols-[1fr_0.9fr]">
+        <section className="rounded-2xl border border-sky-400/15 bg-[#0d1219] p-5 sm:p-6">
           <div className="mb-5">
-            <p className="text-sm font-semibold text-white">Custom upload workspace</p>
+            <p className="text-sm font-semibold text-white">Upload Custom Data</p>
             <p className="mt-1 text-xs leading-5 text-slate-500">
-              Dataset name, file names, and field names are required.
+              Add files together or one at a time. Selecting the same file name again replaces it.
             </p>
           </div>
 
@@ -260,9 +257,11 @@ export function UploadWorkbench() {
           >
             <span>
               <FileUp className="mx-auto mb-3 size-5 text-sky-300" />
-              <span className="block text-sm font-medium text-slate-200">Select all 5 upload files</span>
+              <span className="block text-sm font-medium text-slate-200">
+                {files.length === 0 ? "Select the 5 required files" : "Add or replace files"}
+              </span>
               <span className="mt-2 block text-xs text-slate-500">
-                CSV and JSON, 2 MB maximum per file
+                Select all at once or return to add them one by one
               </span>
             </span>
           </button>
@@ -289,12 +288,7 @@ export function UploadWorkbench() {
           <div className="mt-5 flex flex-col gap-3 sm:flex-row">
             <button
               type="button"
-              disabled={
-                loadingSource !== null ||
-                validating ||
-                validation?.valid !== true ||
-                !datasetName.trim()
-              }
+              disabled={loadingSource !== null || !readyToAnalyze}
               onClick={() => void activate("custom")}
               className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-sky-300 px-4 text-sm font-semibold text-[#071018] transition hover:bg-sky-200 disabled:cursor-not-allowed disabled:opacity-35"
             >
@@ -303,7 +297,7 @@ export function UploadWorkbench() {
               ) : (
                 <UploadCloud className="size-4" />
               )}
-              {loadingSource === "custom" ? "Running analysis" : "Analyze Custom Data"}
+              {loadingSource === "custom" ? "Running analysis" : "Analyze and Open Dashboard"}
             </button>
             {(files.length > 0 || datasetName) && (
               <button
@@ -319,9 +313,14 @@ export function UploadWorkbench() {
 
         <UploadValidationStatus report={validation} validating={validating} />
       </div>
+      )}
 
       <div className="mt-4">
-        <DatasetHistory onLoaded={() => router.push("/dashboard")} />
+        <UploadRequirements validation={validation} />
+      </div>
+
+      <div className="mt-4">
+        <DatasetHistory />
       </div>
     </>
   );

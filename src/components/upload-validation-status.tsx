@@ -46,7 +46,7 @@ export function UploadValidationStatus({
         <div className="mt-5 grid min-h-48 place-items-center rounded-xl border border-dashed border-white/[0.08] text-center">
           <div>
             <LoaderCircle className="mx-auto size-5 animate-spin text-sky-300" />
-            <p className="mt-3 text-xs text-slate-400">Checking file names, schemas, values, and resource IDs…</p>
+            <p className="mt-3 text-xs text-slate-400">Checking file names, schemas, values, and resource IDs...</p>
           </div>
         </div>
       ) : (
@@ -76,7 +76,18 @@ export function UploadValidationStatus({
 
           {!report && (
             <div className="mt-4 rounded-xl border border-sky-400/15 bg-sky-400/[0.04] p-3 text-xs leading-5 text-sky-100/65">
-              Select all five required files in one step. We will show exactly what to fix before anything is uploaded.
+              Select the five required files together or add them one at a time. We will show exactly what to fix before analysis.
+            </div>
+          )}
+
+          {report && report.warnings.length > 0 && (
+            <div className="mt-4 rounded-xl border border-amber-400/15 bg-amber-400/[0.035] p-3">
+              <p className="text-xs font-semibold text-amber-200">Extra files will be ignored</p>
+              {report.warnings.map((warning) => (
+                <p key={`${warning.code}-${warning.fileName}`} className="mt-1 text-[11px] leading-5 text-amber-100/55">
+                  {warning.message}
+                </p>
+              ))}
             </div>
           )}
 

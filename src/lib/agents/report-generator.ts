@@ -1,9 +1,15 @@
 import type { AnalysisResult, ExecutiveReport } from "@/lib/types";
 import { currency, monthLabel, percent } from "@/lib/format";
+import type { ServiceCostChange } from "@/lib/cost-insights";
 
 export function generateExecutiveReport(
   analysis: AnalysisResult,
-  options?: { datasetName?: string; dataSource?: string; generatedAt?: string },
+  options?: {
+    datasetName?: string;
+    dataSource?: string;
+    generatedAt?: string;
+    serviceCostChanges?: ServiceCostChange[];
+  },
 ): ExecutiveReport {
   const datasetName = options?.datasetName ?? "Active dataset";
   const dataSource = options?.dataSource ?? "Active dataset";
@@ -11,6 +17,9 @@ export function generateExecutiveReport(
   const topFindings = analysis.findings.slice(0, 5);
   const highSeverity = analysis.findings.filter((finding) => finding.severity === "high");
   const costChange = analysis.totalMonthlySpend - analysis.previousMonthlySpend;
+  const serviceCostChanges = (options?.serviceCostChanges ?? analysis.serviceCostChanges ?? [])
+    .filter((item) => item.change > 0)
+    .slice(0, 5);
   const direction = costChange >= 0 ? "increased" : "decreased";
   const noFindings = "No deterministic waste findings were detected in this dataset.";
   const priorityActions = topFindings
@@ -57,6 +66,10 @@ Current monthly spend is **${currency.format(analysis.totalMonthlySpend)}**, com
 ## Top 5 cost drivers
 
 ${analysis.serviceSpend.slice(0, 5).map((item) => `- **${item.service}:** ${currency.format(item.cost)} (${percent(item.percent)} of spend)`).join("\n")}
+
+## Top cost increases
+
+${serviceCostChanges.map((item) => `- **${item.service}:** increased ${currency.format(item.change)} (${percent(item.changePercent)}), from ${currency.format(item.previousCost)} to ${currency.format(item.currentCost)}.`).join("\n") || "No service-level cost increases were detected."}
 
 ## Top 5 savings opportunities
 

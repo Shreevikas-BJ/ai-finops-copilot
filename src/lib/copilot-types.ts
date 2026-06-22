@@ -19,6 +19,7 @@ export interface DatasetChunk {
   service?: string;
   team?: string;
   severity?: "high" | "medium" | "low";
+  mandatory?: boolean;
 }
 
 export interface RetrievedDatasetChunk extends DatasetChunk {

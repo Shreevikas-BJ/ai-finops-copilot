@@ -124,6 +124,13 @@ export interface AnalysisResult {
   resourceCount: number;
   findings: Finding[];
   serviceSpend: Array<{ service: string; cost: number; percent: number }>;
+  serviceCostChanges?: Array<{
+    service: string;
+    currentCost: number;
+    previousCost: number;
+    change: number;
+    changePercent: number;
+  }>;
   savingsByService: Array<{ service: string; savings: number; findings: number }>;
   teamExposure: Array<{
     team: string;

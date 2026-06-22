@@ -5,6 +5,7 @@ import { analyzeUsage } from "@/lib/agents/usage-analyzer";
 import { detectAnomalies } from "@/lib/agents/anomaly-detector";
 import { recommendOptimizations } from "@/lib/agents/optimization-recommender";
 import { loadSampleDatasets } from "@/lib/data-loader";
+import { calculateServiceCostChanges } from "@/lib/cost-insights";
 import type { AnalysisResult, Datasets } from "@/lib/types";
 
 function validateDatasetIntegrity(datasets: Datasets) {
@@ -95,6 +96,11 @@ export async function getAnalysis(input?: Datasets): Promise<AnalysisResult> {
     resourceCount: datasets.resources.length,
     findings,
     serviceSpend: costAnalysis.serviceSpend,
+    serviceCostChanges: calculateServiceCostChanges(
+      datasets.costs,
+      costAnalysis.currentMonth,
+      costAnalysis.previousMonth,
+    ),
     savingsByService,
     teamExposure,
   };

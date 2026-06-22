@@ -44,6 +44,11 @@ export async function callGroq(
   const payload = (await response.json().catch(() => ({}))) as GroqResponse;
   if (!response.ok) {
     const providerMessage = payload.error?.message || `Groq request failed (${response.status}).`;
+    if (response.status === 429 || /rate.limit|too.many.requests/i.test(providerMessage)) {
+      throw new Error(
+        "Groq rate limit reached. Wait a moment, then retry with the same dataset question.",
+      );
+    }
     if (
       response.status === 413 ||
       /token|context.length|request.too.large/i.test(providerMessage)

@@ -1,6 +1,7 @@
 import type { ActiveDataset } from "@/lib/active-dataset";
 import type { DatasetChunk, RetrievedDatasetChunk } from "@/lib/copilot-types";
 import type { DatasetSummary } from "@/lib/types";
+import { calculateServiceCostChanges } from "@/lib/cost-insights";
 
 const STOP_WORDS = new Set([
   "a",
@@ -25,42 +26,120 @@ const STOP_WORDS = new Set([
 const QUERY_EXPANSIONS: Record<string, string[]> = {
   action: ["recommendation", "recommended", "finding", "savings"],
   bill: ["cost", "spend", "monthly", "change"],
+  biggest: ["top", "service", "increase", "change", "cost"],
+  caused: ["service", "increase", "change", "cost"],
   change: ["increase", "decrease", "previous", "current", "spike"],
+  changed: ["change", "increase", "decrease", "previous", "current"],
+  compare: ["comparison", "difference", "previous", "current", "change"],
+  comparison: ["compare", "difference", "previous", "current", "change"],
+  difference: ["change", "increase", "decrease", "previous", "current", "cost"],
   fix: ["finding", "recommended", "action", "savings", "high"],
   increase: ["change", "previous", "current", "spike", "cost"],
   jira: ["ticket", "finding", "action", "owner"],
+  major: ["biggest", "top", "difference", "change", "cost"],
+  month: ["monthly", "previous", "current", "change"],
+  months: ["month", "monthly", "previous", "current", "change"],
+  "month-over-month": ["monthly", "previous", "current", "change", "increase"],
+  monthly: ["month", "previous", "current", "cost"],
+  previous: ["current", "change", "month", "cost"],
+  current: ["previous", "change", "month", "cost"],
   priority: ["high", "severity", "savings", "finding", "action"],
   safe: ["risk", "idle", "unattached", "stop", "shutdown"],
   savings: ["save", "opportunity", "finding", "recommendation"],
   shutdown: ["stop", "idle", "risk", "unattached"],
   spend: ["cost", "monthly", "service", "team"],
   ticket: ["jira", "finding", "action", "owner"],
+  two: ["previous", "current", "month", "difference"],
+  why: ["cause", "caused", "increase", "change", "service"],
 };
 
 function money(value: number) {
   return `$${value.toFixed(2)}`;
 }
 
-function summaryText(name: string, summary: DatasetSummary) {
-  return [
-    `Dashboard summary for ${name}.`,
-    `Current monthly spend ${money(summary.totalMonthlySpend)} in ${summary.dataMonth}.`,
-    `Previous monthly spend ${money(summary.previousMonthlySpend)} in ${summary.previousMonth}.`,
-    `Cost change ${money(summary.costChange)} (${summary.monthChangePercent.toFixed(1)} percent).`,
-    `Estimated savings ${money(summary.estimatedMonthlySavings)} monthly and ${money(summary.estimatedYearlySavings)} annually.`,
-    `${summary.resourceCount} resources and ${summary.findingCount} findings.`,
-    `Severity counts: ${summary.highSeverityCount} high, ${summary.mediumSeverityCount} medium, ${summary.lowSeverityCount} low.`,
-  ].join(" ");
-}
-
 export function buildDatasetChunks(activeDataset: ActiveDataset): DatasetChunk[] {
   const { analysis, datasets, name, summary } = activeDataset;
   const resources = new Map(datasets.resources.map((resource) => [resource.resourceId, resource]));
+  const serviceChanges = calculateServiceCostChanges(
+    datasets.costs,
+    analysis.dataMonth,
+    analysis.previousMonth,
+  );
+  const topServices = analysis.serviceSpend
+    .slice(0, 5)
+    .map((item) => `${item.service} ${money(item.cost)}`)
+    .join(", ");
+  const topIncreases = serviceChanges
+    .filter((item) => item.change > 0)
+    .slice(0, 5)
+    .map(
+      (item) =>
+        `${item.service} increased ${money(item.change)} from ${money(item.previousCost)} to ${money(item.currentCost)} (${item.changePercent.toFixed(1)} percent)`,
+    )
+    .join("; ");
+  const topTeams = analysis.teamExposure
+    .slice()
+    .sort((a, b) => b.monthlySpend - a.monthlySpend)
+    .slice(0, 5)
+    .map((item) => `${item.team} ${money(item.monthlySpend)}`)
+    .join(", ");
+  const highFindings = analysis.findings
+    .filter((finding) => finding.severity === "high")
+    .map((finding) => `${finding.id} ${finding.resourceId} ${finding.issueType} ${money(finding.estimatedSavings)}`)
+    .join("; ");
+  const topSavings = analysis.findings
+    .slice(0, 6)
+    .map((finding) => `${finding.resourceId} ${finding.issueType} ${money(finding.estimatedSavings)} ${finding.team}`)
+    .join("; ");
   const chunks: DatasetChunk[] = [
     {
-      id: "summary:dashboard",
+      id: "summary:current-spend",
       source: "summary",
-      text: summaryText(name, summary),
+      mandatory: true,
+      text: `Current monthly spend for ${name} is ${money(summary.totalMonthlySpend)} in ${summary.dataMonth}.`,
+    },
+    {
+      id: "summary:previous-spend",
+      source: "summary",
+      mandatory: true,
+      text: `Previous monthly spend for ${name} was ${money(summary.previousMonthlySpend)} in ${summary.previousMonth}.`,
+    },
+    {
+      id: "summary:cost-change",
+      source: "summary",
+      mandatory: true,
+      text: `Month-over-month cost change is ${money(summary.costChange)} (${summary.monthChangePercent.toFixed(1)} percent), from ${money(summary.previousMonthlySpend)} to ${money(summary.totalMonthlySpend)}.`,
+    },
+    {
+      id: "summary:top-services-current",
+      source: "summary",
+      mandatory: true,
+      text: `Top services by current monthly cost: ${topServices || "no service cost rows"}.`,
+    },
+    {
+      id: "summary:top-service-increases",
+      source: "summary",
+      mandatory: true,
+      text: `Top services by month-over-month cost increase: ${topIncreases || "no service cost increases"}.`,
+    },
+    {
+      id: "summary:top-teams-current",
+      source: "summary",
+      mandatory: true,
+      text: `Top teams by current monthly cost: ${topTeams || "no team cost rows"}.`,
+    },
+    {
+      id: "summary:high-severity",
+      source: "summary",
+      mandatory: true,
+      severity: "high",
+      text: `High severity findings (${summary.highSeverityCount}): ${highFindings || "none"}.`,
+    },
+    {
+      id: "summary:top-savings",
+      source: "summary",
+      mandatory: true,
+      text: `Top savings opportunities, ${money(summary.estimatedMonthlySavings)} monthly and ${money(summary.estimatedYearlySavings)} annually: ${topSavings || "none"}.`,
     },
   ];
 
@@ -191,13 +270,17 @@ export function retrieveRelevantContext(
   limit = 10,
 ): RetrievedDatasetChunk[] {
   const terms = queryTerms(question);
-  if (terms.length === 0) return [];
   const safeLimit = Math.min(12, Math.max(8, limit));
-  return chunks
-    .map((chunk) => ({ ...chunk, score: scoreChunk(question, terms, chunk) }))
+  const scored = chunks.map((chunk) => ({
+    ...chunk,
+    score: scoreChunk(question, terms, chunk),
+  }));
+  const mandatory = scored.filter((chunk) => chunk.mandatory);
+  const relevant = scored
+    .filter((chunk) => !chunk.mandatory)
     .filter((chunk) => chunk.score >= 2)
-    .sort((a, b) => b.score - a.score || a.id.localeCompare(b.id))
-    .slice(0, safeLimit);
+    .sort((a, b) => b.score - a.score || a.id.localeCompare(b.id));
+  return [...mandatory, ...relevant].slice(0, safeLimit);
 }
 
 export function buildCopilotPrompt({

@@ -25,7 +25,7 @@ Calculations and detection stay deterministic and auditable:
 
 ## Product surfaces
 
-- Upload-first home page with Sample Data, named Custom Upload, and History paths.
+- Upload-first home page with two clear starting choices: Sample Data or named Custom Upload.
 - Full-width dashboard with expandable cost, savings, severity, service, team, and resource details.
 - Embedded Groq Copilot beside the dashboard on desktop and below it on mobile.
 - Findings explorer inside the dashboard, with a separate focused page still available.
@@ -37,11 +37,12 @@ Calculations and detection stay deterministic and auditable:
 ## Product flow
 
 1. Open the app on the Upload page.
-2. Choose **Use Sample Data**, name and validate all five custom files, or load a saved dataset.
-3. The server returns parsed records, deterministic analysis, and a compact dataset summary.
-4. The dataset becomes active and is added to browser history in localStorage.
-5. The latest three datasets are retained. Adding a fourth removes the oldest.
-6. The dashboard, embedded Copilot, Findings page, and Report all read the same active dataset.
+2. Choose **Use Sample Data** or **Upload Custom Data**. History remains available below the two starting choices.
+3. For a custom dataset, enter a name and select the five files together or one at a time.
+4. The server returns parsed records, deterministic analysis, and a compact dataset summary.
+5. The dataset becomes active, is added to browser history in localStorage, and opens on the dashboard.
+6. The latest three datasets are retained. Adding a fourth removes the oldest.
+7. The dashboard, embedded Copilot, Findings page, and Report all read the same active dataset.
 
 Loading history switches every data-aware surface immediately. Clearing active data keeps history available for later loading.
 
@@ -50,9 +51,10 @@ Loading history switches every data-aware surface immediately. Clearing active d
 The Copilot uses deterministic lexical retrieval instead of sending full files to Groq:
 
 1. `buildDatasetChunks(activeDataset)` creates compact chunks from cost rows, inventory, metrics, optimizer recommendations, advisor findings, generated findings, and dashboard summaries.
-2. `retrieveRelevantContext(question, chunks)` scores resource IDs, services, teams, severity, finding types, and cost-related terms.
-3. Only the top 8 to 12 relevant chunks are sent to `/api/copilot`.
-4. `buildCopilotPrompt(...)` combines those chunks with the compact dataset summary and strict grounding instructions.
+2. Eight compact summary chunks are always included for current spend, previous spend, cost change, service cost, service increases, team cost, high severity findings, and savings.
+3. `retrieveRelevantContext(question, chunks)` scores resource IDs, services, teams, severity, finding types, and month comparison terms.
+4. Only the eight summary chunks plus up to four relevant detail chunks are sent to `/api/copilot`.
+5. `buildCopilotPrompt(...)` combines those chunks with the compact dataset summary and strict grounding instructions.
 
 No paid embeddings or external vector database are required. Groq output is limited to 650 tokens. If the retrieved context does not contain an answer, Copilot returns: `I could not find that in the active dataset.`
 
@@ -119,6 +121,7 @@ pnpm install --frozen-lockfile
 pnpm lint
 pnpm typecheck
 pnpm build
+pnpm test
 pnpm check:copy
 pnpm check:no-em-dash
 ```
@@ -143,7 +146,7 @@ The `data/` directory contains:
 - `optimizer_recommendations.json`
 - `trusted_advisor_findings.json`
 
-Uploaded files must use those exact names and all five must be selected together. Each file is limited to 2 MB and is processed in memory for one request. The built-in sample workflow remains available without uploading files.
+Uploaded files must use those exact names. Select all five together or add them one at a time. Selecting the same exact file name again replaces the previous selection. Extra files are ignored with a warning. Each required file is limited to 2 MB and is processed in memory for one request. The built-in sample workflow remains available without uploading files.
 
 Use **Download Sample Data** on the Upload page to download a ZIP with all five files. The ZIP export uses the documented schemas and can be uploaded back into the app as a valid custom dataset.
 
@@ -297,6 +300,8 @@ Purpose:
 - Dates must use `YYYY-MM-DD` and represent real calendar dates.
 - `billing_month` must use `YYYY-MM`.
 - Optional CloudWatch metric values may be blank or `null`; their columns must still be present.
+- Extra files are ignored with a warning and do not block an otherwise valid upload.
+- Files may be selected together or one at a time; later selections are merged by exact file name.
 - Validation errors identify the file, problem, and a suggested correction. Analysis remains disabled until every error is resolved.
 
 ## Demo questions
@@ -315,6 +320,7 @@ Purpose:
 - User questions are length-limited and wrapped in a safety-focused system prompt.
 - Full raw files are never sent to Groq. Only the compact summary and top retrieved chunks are sent.
 - Retrieved context is capped at 12 chunks and Groq output is capped at 650 tokens.
+- Month comparison questions always receive compact current spend, previous spend, cost change, and service increase summaries.
 - The LLM is told never to claim it changed AWS resources or created real tickets.
 - The LLM is told not to add general cloud knowledge or external recommendations.
 - The MVP is read-only and accepts no AWS credentials.

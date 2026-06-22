@@ -9,10 +9,17 @@ import {
   type DatasetStore,
 } from "@/lib/active-dataset";
 import type { AnalyzedDatasetPayload } from "@/lib/types";
+import {
+  EMPTY_DATASET_STORE,
+  clearActiveDataset,
+  deleteDatasetFromHistory,
+  loadDatasetFromHistory,
+  renameDatasetInHistory,
+  saveDatasetToHistory,
+} from "@/lib/dataset-store";
 
 const STORAGE_KEY = "ai-finops-copilot.dataset-store.v2";
 const DATASET_EVENT = "ai-finops-dataset-store-change";
-const EMPTY_STORE: DatasetStore = { version: 2, activeId: null, history: [] };
 
 interface ActiveDatasetContextValue {
   activeDataset: ActiveDataset | null;
@@ -22,8 +29,8 @@ interface ActiveDatasetContextValue {
     name: string;
     source: DatasetSource;
     payload: AnalyzedDatasetPayload;
-  }) => void;
-  loadDataset: (id: string) => void;
+  }) => ActiveDataset;
+  loadDataset: (id: string) => boolean;
   renameDataset: (id: string, name: string) => void;
   deleteDataset: (id: string) => void;
   clearDataset: () => void;
@@ -61,12 +68,12 @@ function getServerClientSnapshot() {
 }
 
 function parseStore(serialized: string | null): DatasetStore {
-  if (!serialized) return EMPTY_STORE;
+  if (!serialized) return EMPTY_DATASET_STORE;
   try {
     const value: unknown = JSON.parse(serialized);
-    return isDatasetStore(value) ? value : EMPTY_STORE;
+    return isDatasetStore(value) ? value : EMPTY_DATASET_STORE;
   } catch {
-    return EMPTY_STORE;
+    return EMPTY_DATASET_STORE;
   }
 }
 
@@ -114,43 +121,31 @@ export function ActiveDatasetProvider({ children }: { children: React.ReactNode 
   }) {
     const dataset = createActiveDataset(input);
     const current = readStore();
-    writeStore({
-      version: 2,
-      activeId: dataset.id,
-      history: [dataset, ...current.history].slice(0, 3),
-    });
+    writeStore(saveDatasetToHistory(current, dataset));
+    return dataset;
   }
 
   function loadDataset(id: string) {
     const current = readStore();
-    if (!current.history.some((dataset) => dataset.id === id)) return;
-    writeStore({ ...current, activeId: id });
+    const result = loadDatasetFromHistory(current, id);
+    if (!result.loaded) return false;
+    writeStore(result.store);
+    return true;
   }
 
   function renameDataset(id: string, name: string) {
-    const trimmed = name.trim();
-    if (!trimmed) return;
     const current = readStore();
-    writeStore({
-      ...current,
-      history: current.history.map((dataset) =>
-        dataset.id === id ? { ...dataset, name: trimmed } : dataset,
-      ),
-    });
+    writeStore(renameDatasetInHistory(current, id, name));
   }
 
   function deleteDataset(id: string) {
     const current = readStore();
-    writeStore({
-      ...current,
-      activeId: current.activeId === id ? null : current.activeId,
-      history: current.history.filter((dataset) => dataset.id !== id),
-    });
+    writeStore(deleteDatasetFromHistory(current, id));
   }
 
   function clearDataset() {
     const current = readStore();
-    writeStore({ ...current, activeId: null });
+    writeStore(clearActiveDataset(current));
   }
 
   return (

@@ -31,14 +31,21 @@ export type UploadValidationCode =
   | "missing_columns"
   | "missing_file"
   | "missing_required_fields"
-  | "resource_id_mismatch"
-  | "unsupported_file";
+  | "resource_id_mismatch";
+
+export type UploadValidationWarningCode = "unsupported_file";
 
 export interface UploadValidationIssue {
   code: UploadValidationCode;
   fileName: string;
   message: string;
   resolution: string;
+}
+
+export interface UploadValidationWarning {
+  code: UploadValidationWarningCode;
+  fileName: string;
+  message: string;
 }
 
 export interface UploadFileValidation {
@@ -50,6 +57,7 @@ export interface UploadFileValidation {
 export interface UploadValidationReport {
   valid: boolean;
   issues: UploadValidationIssue[];
+  warnings: UploadValidationWarning[];
   files: UploadFileValidation[];
   selectedRequiredFiles: number;
 }
@@ -84,8 +92,12 @@ function isNumeric(value: unknown) {
 }
 
 function isValidDate(value: unknown) {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(value))) return false;
-  const [year, month, day] = String(value).split("-").map(Number);
+  const normalized = String(value).trim();
+  const match = /^(\d{4})-(\d{2})-(\d{2})(?:[T\s].*)?$/.exec(normalized);
+  if (!match) return false;
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
   const date = new Date(Date.UTC(year, month - 1, day));
   return (
     date.getUTCFullYear() === year &&
@@ -305,18 +317,18 @@ function validateJson(
 
 export function validateUploadContents(files: UploadFileContent[]): UploadValidationReport {
   const issues: UploadValidationIssue[] = [];
+  const warnings: UploadValidationWarning[] = [];
   const byName = new Map<string, UploadFileContent[]>();
   files.forEach((file) => byName.set(file.name, [...(byName.get(file.name) ?? []), file]));
 
   files.forEach((file) => {
     if (!isRequiredUploadFileName(file.name)) {
-      addIssue(
-        issues,
-        file.name,
-        "unsupported_file",
-        `${file.name} is not one of the five supported upload files.`,
-        "Remove it and upload only the exact file names listed in Upload Requirements.",
-      );
+      warnings.push({
+        code: "unsupported_file",
+        fileName: file.name,
+        message: `${file.name} is not required and will be ignored during analysis.`,
+      });
+      return;
     }
     if (file.size > MAX_FILE_SIZE) {
       addIssue(
@@ -337,7 +349,7 @@ export function validateUploadContents(files: UploadFileContent[]): UploadValida
         name,
         "missing_file",
         `${name} is missing.`,
-        "Select all five required files together, including this file.",
+        "Select this file. You can add files together or one at a time.",
       );
     } else if (matches.length > 1) {
       addIssue(
@@ -373,7 +385,7 @@ export function validateUploadContents(files: UploadFileContent[]): UploadValida
             issues,
             name,
             "resource_id_mismatch",
-            `${unmatched.length} resource_id value${unmatched.length === 1 ? " does" : "s do"} not exist in resource_inventory.csv: ${unmatched.slice(0, 3).join(", ")}${unmatched.length > 3 ? "…" : ""}.`,
+            `${unmatched.length} resource_id value${unmatched.length === 1 ? " does" : "s do"} not exist in resource_inventory.csv: ${unmatched.slice(0, 3).join(", ")}${unmatched.length > 3 ? "..." : ""}.`,
             "Add the resources to the inventory or correct the IDs so related files use the same value.",
           );
         }
@@ -392,9 +404,19 @@ export function validateUploadContents(files: UploadFileContent[]): UploadValida
   return {
     valid: issues.length === 0,
     issues,
+    warnings,
     files: filesStatus,
     selectedRequiredFiles: REQUIRED_UPLOAD_FILE_NAMES.filter((name) => byName.has(name)).length,
   };
+}
+
+export function mergeUploadFiles<T extends { name: string }>(
+  currentFiles: T[],
+  selectedFiles: T[],
+): T[] {
+  const merged = new Map(currentFiles.map((file) => [file.name, file]));
+  selectedFiles.forEach((file) => merged.set(file.name, file));
+  return [...merged.values()];
 }
 
 export async function validateUploadFiles(files: File[]): Promise<UploadValidationReport> {

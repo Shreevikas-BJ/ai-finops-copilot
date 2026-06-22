@@ -47,10 +47,10 @@ export async function POST(request: Request) {
       source: chunk.source,
       resourceId: chunk.resourceId,
     }));
-    if (retrievedContext.length === 0) {
+    if (!retrievedContext.some((chunk) => chunk.score >= 2)) {
       return NextResponse.json({
         answer: "I could not find that in the active dataset.",
-        sources,
+        sources: [],
       });
     }
 
@@ -73,7 +73,9 @@ export async function POST(request: Request) {
     const message = error instanceof Error ? error.message : "Unable to contact Groq.";
     const status = message.includes("GROQ_API_KEY")
       ? 503
-      : message.includes("token limit")
+      : message.includes("rate limit")
+        ? 429
+        : message.includes("token limit")
         ? 413
         : 502;
     return NextResponse.json({ error: message }, { status });

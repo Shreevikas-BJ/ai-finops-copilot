@@ -26,6 +26,7 @@ export function ReportContent() {
       />
       <ReportViewer
         analysis={activeDataset.analysis}
+        datasets={activeDataset.datasets}
         datasetName={activeDataset.name}
         dataSource={activeDataset.sourceLabel}
         generatedAt={new Date().toISOString()}

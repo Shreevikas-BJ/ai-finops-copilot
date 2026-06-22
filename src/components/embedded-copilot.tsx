@@ -17,6 +17,7 @@ import type { CopilotResponsePayload } from "@/lib/copilot-types";
 import { buildDatasetChunks, retrieveRelevantContext } from "@/lib/retrieval";
 
 const SAMPLE_QUESTIONS = [
+  "What is the major difference in two months?",
   "Why did my cloud bill increase?",
   "What should I fix first?",
   "Show me the high severity findings.",

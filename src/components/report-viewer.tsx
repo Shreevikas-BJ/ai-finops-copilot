@@ -12,20 +12,33 @@ import {
 import { SeverityBadge } from "@/components/ui";
 import { generateExecutiveReport } from "@/lib/agents/report-generator";
 import { currency, percent } from "@/lib/format";
-import type { AnalysisResult } from "@/lib/types";
+import { calculateServiceCostChanges } from "@/lib/cost-insights";
+import type { AnalysisResult, Datasets } from "@/lib/types";
 
 export function ReportViewer({
   analysis,
+  datasets,
   datasetName,
   dataSource,
   generatedAt,
 }: {
   analysis: AnalysisResult;
+  datasets: Datasets;
   datasetName: string;
   dataSource: string;
   generatedAt: string;
 }) {
-  const report = generateExecutiveReport(analysis, { datasetName, dataSource, generatedAt });
+  const serviceCostChanges = calculateServiceCostChanges(
+    datasets.costs,
+    analysis.dataMonth,
+    analysis.previousMonth,
+  ).filter((item) => item.change > 0);
+  const report = generateExecutiveReport(analysis, {
+    datasetName,
+    dataSource,
+    generatedAt,
+    serviceCostChanges,
+  });
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState("");
   const copiedTimer = useRef<number | null>(null);
@@ -47,6 +60,7 @@ export function ReportViewer({
       copiedTimer.current = window.setTimeout(() => setCopied(false), 1800);
     };
     try {
+      if (!navigator.clipboard?.writeText) throw new Error("Clipboard API unavailable");
       await navigator.clipboard.writeText(report.markdown);
       markCopied();
     } catch {
@@ -73,8 +87,10 @@ export function ReportViewer({
     anchor.href = url;
     const safeName = datasetName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
     anchor.download = `${safeName || "ai-finops"}-report-${analysis.dataMonth}.md`;
+    document.body.appendChild(anchor);
     anchor.click();
-    URL.revokeObjectURL(url);
+    anchor.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 500);
   }
 
   return (
@@ -186,6 +202,27 @@ export function ReportViewer({
               </div>
             </section>
           </div>
+
+          <section className="mt-8">
+            <h3 className="text-sm font-semibold text-white">Top cost increases</h3>
+            {serviceCostChanges.length === 0 ? (
+              <p className="mt-3 text-xs text-slate-500">No service-level cost increases were detected.</p>
+            ) : (
+              <div className="mt-3 grid gap-2 md:grid-cols-2 xl:grid-cols-3">
+                {serviceCostChanges.slice(0, 5).map((item) => (
+                  <div key={item.service} className="rounded-xl border border-amber-400/10 bg-amber-400/[0.025] p-3.5">
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-xs font-semibold text-slate-200">{item.service}</span>
+                      <span className="font-mono text-xs font-semibold text-amber-300">+{currency.format(item.change)}</span>
+                    </div>
+                    <p className="mt-2 text-[11px] text-slate-500">
+                      {currency.format(item.previousCost)} to {currency.format(item.currentCost)} | {percent(item.changePercent)}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
 
           <section className="mt-8">
             <h3 className="text-sm font-semibold text-white">High severity findings</h3>

@@ -1,17 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Check, DatabaseBackup, Pencil, RotateCcw, Trash2, X } from "lucide-react";
 import { useActiveDataset } from "@/components/active-dataset-provider";
 import { currency } from "@/lib/format";
 
-export function DatasetHistory({
-  compact = false,
-  onLoaded,
-}: {
-  compact?: boolean;
-  onLoaded?: () => void;
-}) {
+export function DatasetHistory({ compact = false }: { compact?: boolean }) {
+  const router = useRouter();
   const {
     activeDataset,
     history,
@@ -122,14 +118,12 @@ export function DatasetHistory({
                       <div className="flex flex-wrap gap-1.5">
                         <button
                           type="button"
-                          disabled={active}
                           onClick={() => {
-                            loadDataset(dataset.id);
-                            onLoaded?.();
+                            if (loadDataset(dataset.id)) router.push("/dashboard");
                           }}
-                          className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-white/[0.08] px-2.5 text-[10px] font-semibold text-slate-300 hover:bg-white/[0.04] disabled:cursor-default disabled:opacity-35"
+                          className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-white/[0.08] px-2.5 text-[10px] font-semibold text-slate-300 hover:bg-white/[0.04]"
                         >
-                          <RotateCcw className="size-3" /> Load
+                          <RotateCcw className="size-3" /> {active ? "Reload" : "Load"}
                         </button>
                         <button
                           type="button"
