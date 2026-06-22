@@ -1,50 +1,42 @@
-import { Check, ChevronDown, Database, FileJson, FileSpreadsheet, Upload } from "lucide-react";
+import {
+  Check,
+  CheckCircle2,
+  ChevronDown,
+  Circle,
+  FileJson,
+  FileSpreadsheet,
+  XCircle,
+} from "lucide-react";
 import { UPLOAD_FILE_REQUIREMENTS } from "@/lib/upload-schema";
+import type { UploadValidationReport } from "@/lib/upload-validation";
 
-export function UploadRequirements() {
+export function UploadRequirements({
+  validation,
+}: {
+  validation: UploadValidationReport | null;
+}) {
   return (
     <section className="mb-4 rounded-2xl border border-white/[0.075] bg-[#0d1219] p-5 sm:p-6">
       <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-start">
         <div>
-          <p className="text-sm font-semibold text-white">Upload Requirements</p>
+          <p className="text-sm font-semibold text-white">Required upload files and schemas</p>
           <p className="mt-1 max-w-2xl text-xs leading-5 text-slate-500">
-            Start instantly with the built-in demo, or upload all five files using the schemas below.
-            File names and field names must match exactly.
+            Custom analysis requires all five files. Expand any file to see its exact fields, purpose,
+            and a short example.
           </p>
         </div>
         <span className="inline-flex w-fit items-center rounded-full border border-white/[0.08] bg-white/[0.03] px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400">
-          5 files · CSV + JSON
+          5 required files
         </span>
-      </div>
-
-      <div className="mt-5 grid gap-3 md:grid-cols-2">
-        <div className="flex gap-3 rounded-xl border border-emerald-400/15 bg-emerald-400/[0.04] p-4">
-          <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-emerald-400/10 text-emerald-300">
-            <Database className="size-4" />
-          </span>
-          <div>
-            <p className="text-sm font-medium text-emerald-100">Use Sample Data</p>
-            <p className="mt-1 text-xs leading-5 text-emerald-100/55">
-              No files needed. Click the sample button and the included synthetic dataset is analyzed immediately.
-            </p>
-          </div>
-        </div>
-        <div className="flex gap-3 rounded-xl border border-sky-400/15 bg-sky-400/[0.04] p-4">
-          <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-sky-400/10 text-sky-300">
-            <Upload className="size-4" />
-          </span>
-          <div>
-            <p className="text-sm font-medium text-sky-100">Upload your own data</p>
-            <p className="mt-1 text-xs leading-5 text-sky-100/55">
-              Select all five files together. Validation runs locally before the Analyze Upload button is enabled.
-            </p>
-          </div>
-        </div>
       </div>
 
       <div className="mt-5 space-y-2">
         {UPLOAD_FILE_REQUIREMENTS.map((requirement) => {
           const FileIcon = requirement.format === "CSV" ? FileSpreadsheet : FileJson;
+          const fileValidation = validation?.files.find((file) => file.name === requirement.name);
+          const status = fileValidation?.status ?? "missing";
+          const StatusIcon =
+            status === "valid" ? CheckCircle2 : status === "invalid" ? XCircle : Circle;
           return (
             <details
               key={requirement.name}
@@ -65,14 +57,29 @@ export function UploadRequirements() {
                 <span className="inline-flex rounded-full border border-white/[0.07] px-2 py-1 text-[10px] font-medium text-slate-500">
                   {requirement.format}
                 </span>
-                <span className="hidden text-[10px] text-slate-600 sm:inline">
-                  {requirement.requiredFields.length} fields
+                <span
+                  className={`hidden items-center gap-1 text-[10px] font-medium sm:inline-flex ${
+                    status === "valid"
+                      ? "text-emerald-400"
+                      : status === "invalid"
+                        ? "text-rose-300"
+                        : "text-slate-600"
+                  }`}
+                >
+                  <StatusIcon className="size-3" />
+                  {status === "valid"
+                    ? "Valid"
+                    : status === "invalid"
+                      ? "Fix required"
+                      : validation
+                        ? "Missing"
+                        : "Waiting"}
                 </span>
                 <ChevronDown className="size-4 shrink-0 text-slate-600 transition-transform group-open:rotate-180" />
               </summary>
 
               <div className="border-t border-white/[0.06] px-4 py-4 sm:px-5">
-                <div className="grid gap-5 lg:grid-cols-[0.75fr_1.25fr]">
+                <div className="grid gap-5 lg:grid-cols-[0.72fr_1.28fr]">
                   <div>
                     <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
                       Used for
@@ -85,11 +92,21 @@ export function UploadRequirements() {
                         </li>
                       ))}
                     </ul>
-                    <p className="mt-4 text-[11px] leading-5 text-slate-500">{requirement.guidance}</p>
+                    <p className="mt-4 text-[11px] leading-5 text-slate-500">
+                      {requirement.guidance}
+                    </p>
+                    <div className="mt-4">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                        Example preview
+                      </p>
+                      <pre className="mt-2 overflow-x-auto whitespace-pre-wrap rounded-lg border border-white/[0.06] bg-[#080c12] p-3 font-mono text-[10px] leading-5 text-slate-400">
+                        {requirement.preview}
+                      </pre>
+                    </div>
                   </div>
                   <div>
                     <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
-                      Required columns / fields
+                      Required columns or fields
                     </p>
                     <div className="mt-2.5 flex flex-wrap gap-1.5">
                       {requirement.requiredFields.map((field) => (

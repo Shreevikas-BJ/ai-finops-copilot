@@ -24,6 +24,8 @@ export const UPLOAD_FILE_REQUIREMENTS = [
       "project",
     ],
     guidance: "One row per resource and billing month. billing_month uses YYYY-MM and both cost fields must be numeric.",
+    preview:
+      "billing_month,service,resource_id,...,current_month_cost_usd,previous_month_cost_usd\n2026-05,EC2,i-ec2-001,...,120,100",
   },
   {
     name: "resource_inventory.csv",
@@ -49,6 +51,8 @@ export const UPLOAD_FILE_REQUIREMENTS = [
       "tags",
     ],
     guidance: "This is the source of truth for resource IDs. created_date uses YYYY-MM-DD.",
+    preview:
+      "resource_id,resource_type,resource_name,status,size_or_class,...\ni-ec2-001,EC2,api-worker,running,m5.xlarge,...",
   },
   {
     name: "cloudwatch_metrics.csv",
@@ -73,6 +77,8 @@ export const UPLOAD_FILE_REQUIREMENTS = [
       "avg_object_age_days",
     ],
     guidance: "metric_start and metric_end use YYYY-MM-DD. Optional metric values may be blank or null.",
+    preview:
+      "resource_id,metric_start,metric_end,avg_cpu_percent,max_cpu_percent,...\ni-ec2-001,2026-05-01,2026-05-31,2.1,8.7,...",
   },
   {
     name: "optimizer_recommendations.json",
@@ -89,6 +95,8 @@ export const UPLOAD_FILE_REQUIREMENTS = [
       "reason",
     ],
     guidance: "The file must contain a JSON array. Each object represents one recommendation.",
+    preview:
+      '[{"resource_id":"i-ec2-001","service":"EC2","finding":"Over-provisioned","estimated_monthly_savings_usd":82,...}]',
   },
   {
     name: "trusted_advisor_findings.json",
@@ -111,6 +119,8 @@ export const UPLOAD_FILE_REQUIREMENTS = [
       "owner",
     ],
     guidance: "The file must contain a JSON array. Each object represents one advisory finding.",
+    preview:
+      '[{"check_id":"TA-001","resource_id":"vol-ebs-002","service":"EBS","status":"warning",...}]',
   },
 ] as const;
 

@@ -57,7 +57,11 @@ export function FindingsExplorer({ findings }: { findings: Finding[] }) {
             >
               {filter.options.map((option) => (
                 <option key={option} value={option}>
-                  {option === "all" ? `All ${filter.label.toLowerCase()}s` : option}
+                  {option === "all"
+                    ? filter.label === "Severity"
+                      ? "All severities"
+                      : `All ${filter.label.toLowerCase()}s`
+                    : option}
                 </option>
               ))}
             </select>

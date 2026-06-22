@@ -1,17 +1,16 @@
 import { NextResponse } from "next/server";
 import { getAnalysis } from "@/lib/analysis";
 import {
-  loadSampleDatasets,
   parseCosts,
   parseMetrics,
   parseRecommendations,
   parseResources,
   parseTrustedAdvisor,
 } from "@/lib/data-loader";
+import { REQUIRED_UPLOAD_FILE_NAMES } from "@/lib/upload-schema";
+import { validateUploadContents } from "@/lib/upload-validation";
 
 export const runtime = "nodejs";
-
-const MAX_FILE_SIZE = 2 * 1024 * 1024;
 
 export async function POST(request: Request) {
   try {
@@ -20,42 +19,48 @@ export async function POST(request: Request) {
       return NextResponse.json(await getAnalysis());
     }
 
-    const datasets = await loadSampleDatasets();
     const formData = await request.formData();
     const files = [...formData.values()].filter((value): value is File => value instanceof File);
-    for (const file of files) {
-      if (file.size > MAX_FILE_SIZE) {
-        return NextResponse.json(
-          { error: `${file.name} exceeds the 2 MB MVP upload limit.` },
-          { status: 413 },
-        );
-      }
-      const content = await file.text();
-      switch (file.name.toLowerCase()) {
-        case "cost_usage.csv":
-          datasets.costs = parseCosts(content);
-          break;
-        case "resource_inventory.csv":
-          datasets.resources = parseResources(content);
-          break;
-        case "cloudwatch_metrics.csv":
-          datasets.metrics = parseMetrics(content);
-          break;
-        case "optimizer_recommendations.json":
-          datasets.recommendations = parseRecommendations(content);
-          break;
-        case "trusted_advisor_findings.json":
-          datasets.trustedAdvisor = parseTrustedAdvisor(content);
-          break;
-        default:
-          return NextResponse.json(
-            { error: `Unsupported file name: ${file.name}` },
-            { status: 400 },
-          );
-      }
+    const uploadContents = await Promise.all(
+      files.map(async (file) => ({
+        name: file.name,
+        size: file.size,
+        content: await file.text(),
+      })),
+    );
+    const validation = validateUploadContents(uploadContents);
+    if (!validation.valid) {
+      const firstIssue = validation.issues[0];
+      const status = validation.issues.some((issue) => issue.code === "file_too_large")
+        ? 413
+        : 400;
+      return NextResponse.json(
+        {
+          error: firstIssue
+            ? `${firstIssue.message} ${firstIssue.resolution}`
+            : "Upload validation failed.",
+          validation,
+        },
+        { status },
+      );
     }
 
-    return NextResponse.json(await getAnalysis(datasets));
+    const byName = new Map(uploadContents.map((file) => [file.name, file.content]));
+    const contentFor = (name: (typeof REQUIRED_UPLOAD_FILE_NAMES)[number]) => {
+      const content = byName.get(name);
+      if (content === undefined) throw new Error(`${name} is missing.`);
+      return content;
+    };
+
+    return NextResponse.json(
+      await getAnalysis({
+        costs: parseCosts(contentFor("cost_usage.csv")),
+        resources: parseResources(contentFor("resource_inventory.csv")),
+        metrics: parseMetrics(contentFor("cloudwatch_metrics.csv")),
+        recommendations: parseRecommendations(contentFor("optimizer_recommendations.json")),
+        trustedAdvisor: parseTrustedAdvisor(contentFor("trusted_advisor_findings.json")),
+      }),
+    );
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unable to analyze the data.";
     return NextResponse.json({ error: message }, { status: 400 });

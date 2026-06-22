@@ -4,18 +4,18 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Bot,
-  Database,
   FileText,
   LayoutDashboard,
   SearchCheck,
+  UploadCloud,
 } from "lucide-react";
 
 const links = [
-  { href: "/", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/data", label: "Data workspace", icon: Database },
+  { href: "/", label: "Upload", icon: UploadCloud },
+  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/findings", label: "Findings", icon: SearchCheck },
   { href: "/copilot", label: "AI Copilot", icon: Bot },
-  { href: "/report", label: "Executive report", icon: FileText },
+  { href: "/report", label: "Report", icon: FileText },
 ];
 
 export function SidebarNav() {

@@ -42,12 +42,14 @@ export async function callGroq(
 
   const payload = (await response.json()) as GroqResponse;
   if (!response.ok) {
-    throw new Error(payload.error?.message || `Groq request failed (${response.status}).`);
+    throw new Error(
+      (payload.error?.message || `Groq request failed (${response.status}).`).replaceAll("\u2014", "-"),
+    );
   }
 
   const content = payload.choices?.[0]?.message?.content?.trim();
   if (!content) throw new Error("Groq returned an empty response.");
-  return content;
+  return content.replaceAll("\u2014", "-");
 }
 
 export function compactAnalysis(analysis: AnalysisResult) {

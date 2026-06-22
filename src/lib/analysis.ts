@@ -7,8 +7,32 @@ import { recommendOptimizations } from "@/lib/agents/optimization-recommender";
 import { loadSampleDatasets } from "@/lib/data-loader";
 import type { AnalysisResult, Datasets } from "@/lib/types";
 
+function validateDatasetIntegrity(datasets: Datasets) {
+  if (datasets.costs.length === 0) {
+    throw new Error("The active dataset has no cost records.");
+  }
+  if (datasets.resources.length === 0) {
+    throw new Error("The active dataset has no resource inventory records.");
+  }
+
+  const inventoryIds = new Set(datasets.resources.map((resource) => resource.resourceId));
+  const relatedIds = [
+    ...datasets.costs.map((record) => record.resourceId),
+    ...datasets.metrics.map((record) => record.resourceId),
+    ...datasets.recommendations.map((record) => record.resourceId),
+    ...datasets.trustedAdvisor.map((record) => record.resourceId),
+  ].filter(Boolean);
+  const unmatched = [...new Set(relatedIds.filter((resourceId) => !inventoryIds.has(resourceId)))];
+  if (unmatched.length > 0) {
+    throw new Error(
+      `Related files contain resource IDs that are missing from inventory: ${unmatched.slice(0, 5).join(", ")}.`,
+    );
+  }
+}
+
 export async function getAnalysis(input?: Datasets): Promise<AnalysisResult> {
   const datasets = input ?? (await loadSampleDatasets());
+  validateDatasetIntegrity(datasets);
   const costAnalysis = analyzeCosts(datasets.costs);
   const usageSignals = analyzeUsage(datasets);
   const anomalies = detectAnomalies(datasets, costAnalysis);

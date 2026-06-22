@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint .",
+    "lint": "eslint . && node scripts/check-no-em-dash.mjs",
+    "check:no-em-dash": "node scripts/check-no-em-dash.mjs",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

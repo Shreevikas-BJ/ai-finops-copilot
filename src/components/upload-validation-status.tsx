@@ -60,7 +60,13 @@ export function UploadValidationStatus({
                     <Icon className={`size-4 shrink-0 ${file.status === "valid" ? "text-emerald-400" : file.status === "invalid" ? "text-rose-300" : "text-slate-700"}`} />
                     <span className="min-w-0 flex-1 truncate font-mono text-[11px] text-slate-300">{file.name}</span>
                     <span className={`text-[10px] font-medium ${file.status === "valid" ? "text-emerald-400" : file.status === "invalid" ? "text-rose-300" : "text-slate-600"}`}>
-                      {file.status === "valid" ? "Valid" : file.status === "invalid" ? `${file.issueCount} issue${file.issueCount === 1 ? "" : "s"}` : "Required"}
+                      {file.status === "valid"
+                        ? "Valid"
+                        : file.status === "invalid"
+                          ? `${file.issueCount} issue${file.issueCount === 1 ? "" : "s"}`
+                          : report
+                            ? "Missing"
+                            : "Required"}
                     </span>
                   </div>
                 );

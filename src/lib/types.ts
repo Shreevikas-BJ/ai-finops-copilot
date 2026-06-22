@@ -111,4 +111,6 @@ export interface ExecutiveReport {
   period: string;
   summary: string;
   markdown: string;
+  dataSource: string;
+  generatedAt: string;
 }

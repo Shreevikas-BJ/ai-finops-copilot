@@ -63,6 +63,13 @@ export function SavingsChart({
 }: {
   data: Array<{ service: string; savings: number; findings: number }>;
 }) {
+  if (data.length === 0) {
+    return (
+      <div className="grid min-h-44 place-items-center rounded-xl border border-dashed border-white/[0.08] px-6 text-center text-xs leading-5 text-slate-500">
+        No savings opportunities were detected in this dataset.
+      </div>
+    );
+  }
   const max = Math.max(...data.map((item) => item.savings), 1);
   return (
     <div className="space-y-5">

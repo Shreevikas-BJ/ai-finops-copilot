@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Cloud, LockKeyhole, ShieldCheck, Sparkles } from "lucide-react";
 import { SidebarNav } from "@/components/sidebar-nav";
+import { DataSourceIndicator } from "@/components/data-source-indicator";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   return (
@@ -37,9 +38,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <span className="hidden sm:inline">FinOps decision support</span>
               <span className="sm:hidden">AI FinOps Copilot</span>
             </div>
-            <div className="flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.03] px-3 py-1.5 text-xs text-slate-400">
-              <LockKeyhole className="size-3.5 text-emerald-400" />
-              No AWS credentials
+            <div className="flex items-center gap-2">
+              <DataSourceIndicator />
+              <div className="hidden items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.03] px-3 py-1.5 text-xs text-slate-400 sm:flex">
+                <LockKeyhole className="size-3.5 text-emerald-400" />
+                No AWS credentials
+              </div>
             </div>
           </div>
           <div className="overflow-x-auto border-t border-white/[0.05] px-3 py-2 lg:hidden">

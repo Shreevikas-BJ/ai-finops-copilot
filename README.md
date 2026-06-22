@@ -8,7 +8,7 @@ AWS tools can identify an underutilized resource. This app adds the action layer
 
 ## What it solves
 
-Cloud cost data is usually fragmented across billing exports, resource tags, CloudWatch, Compute Optimizer, and Trusted Advisor. The expensive part is often not detection—it is deciding what to do, routing the work to the right team, and explaining the trade-off. AI FinOps Copilot combines those signals into one reviewable queue.
+Cloud cost data is usually fragmented across billing exports, resource tags, CloudWatch, Compute Optimizer, and Trusted Advisor. The expensive part is often not detection, it is deciding what to do, routing the work to the right team, and explaining the trade-off. AI FinOps Copilot combines those signals into one reviewable queue.
 
 ### Differentiator from AWS Trusted Advisor
 
@@ -25,12 +25,22 @@ Calculations and detection stay deterministic and auditable:
 
 ## Product surfaces
 
-- Dashboard with spend, savings, finding, anomaly, service-spend, and savings-opportunity views.
-- Data workspace with included sample data and optional in-memory CSV/JSON overrides.
+- Upload-first home page with clear Sample Data and Custom Upload paths.
+- Dashboard with active-dataset spend, savings, severity, service, and team views.
 - Findings explorer with search and severity, service, and team filters.
-- Groq-powered Copilot for grounded FinOps Q&A and ticket drafting.
-- Copyable executive report with deterministic output and optional Groq refinement.
+- Groq-powered Copilot grounded only in the active dataset.
+- Executive report with copy and Markdown download actions.
 - Server routes at `/api/analyze`, `/api/copilot`, and `/api/report`.
+
+## Product flow
+
+1. Open the app on the Upload page.
+2. Choose **Use Sample Data** or validate all five custom files.
+3. The server runs deterministic analysis and returns the calculated result.
+4. The analyzed dataset becomes active and is persisted in browser localStorage.
+5. Dashboard, Findings, AI Copilot, and Report all read that same active dataset.
+
+Loading another source replaces the active dataset. Clearing browser storage or using **Clear active data** returns the app to its empty state.
 
 ## Detection rules
 
@@ -94,6 +104,7 @@ pnpm install --frozen-lockfile
 pnpm lint
 pnpm typecheck
 pnpm build
+pnpm check:no-em-dash
 ```
 
 ## Deploy to Vercel
@@ -120,7 +131,7 @@ Uploaded files must use those exact names and all five must be selected together
 
 ## Upload File Requirements
 
-The upload workspace validates file presence, schemas, required values, formats, and related resource IDs in the browser before enabling **Analyze Upload**. CSV column names and JSON field names are case-sensitive and must match the names below.
+The upload workspace validates file presence, schemas, required values, formats, and related resource IDs in the browser before enabling **Analyze Custom Data**. The API repeats those checks before analysis. CSV column names and JSON field names are case-sensitive and must match the names below.
 
 ### cost_usage.csv
 
@@ -291,10 +302,10 @@ Purpose:
 
 Create a `docs/screenshots/` directory when you are ready to add portfolio images. Recommended captures:
 
-1. `dashboard.png` — 1440 × 1000, showing KPI cards and both charts.
-2. `findings.png` — filterable findings with evidence and recommended actions.
-3. `copilot.png` — one completed answer to “What should I fix first?”
-4. `report.png` — executive report with ticket-ready action items.
+1. `dashboard.png` - 1440 × 1000, showing KPI cards and both charts.
+2. `findings.png` - filterable findings with evidence and recommended actions.
+3. `copilot.png` - one completed answer to “What should I fix first?”
+4. `report.png` - executive report with ticket-ready action items.
 
 Then embed them near the Product surfaces section with standard Markdown image links. Keep screenshots free of real API keys or customer cost data.
 
