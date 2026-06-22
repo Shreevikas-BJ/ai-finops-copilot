@@ -3,14 +3,23 @@ export type Severity = "high" | "medium" | "low";
 export interface CostRecord {
   month: string;
   resourceId: string;
+  resourceName: string;
   service: string;
   owner: string;
   team: string;
   monthlyCost: number;
+  accountId?: string;
+  region?: string;
+  usageType?: string;
+  usageAmount?: number;
+  usageUnit?: string;
+  environment?: string;
+  project?: string;
 }
 
 export interface ResourceRecord {
   resourceId: string;
+  resourceName: string;
   service: string;
   resourceType: string;
   status: string;
@@ -20,7 +29,11 @@ export interface ResourceRecord {
   environment: string;
   criticality: "high" | "medium" | "low";
   storageClass?: string;
+  sizeOrClass?: string;
   objectAgeDays: number;
+  project?: string;
+  createdDate?: string;
+  production?: boolean;
 }
 
 export interface MetricRecord {
@@ -30,6 +43,8 @@ export interface MetricRecord {
   maximum: number;
   unit: string;
   periodDays: number;
+  metricStart?: string;
+  metricEnd?: string;
 }
 
 export interface OptimizerRecommendation {
@@ -38,6 +53,12 @@ export interface OptimizerRecommendation {
   recommendation: string;
   projectedSavings: number;
   risk: "high" | "medium" | "low";
+  service?: string;
+  finding?: string;
+  currentType?: string;
+  recommendedType?: string;
+  confidence?: string;
+  reason?: string;
 }
 
 export interface TrustedAdvisorFinding {
@@ -46,6 +67,11 @@ export interface TrustedAdvisorFinding {
   check: string;
   status: string;
   note: string;
+  service?: string;
+  estimatedSavings?: number;
+  recommendedAction?: string;
+  risk?: "high" | "medium" | "low";
+  owner?: string;
 }
 
 export interface Datasets {
@@ -59,6 +85,7 @@ export interface Datasets {
 export interface Finding {
   id: string;
   resourceId: string;
+  resourceName: string;
   service: string;
   owner: string;
   team: string;
@@ -104,6 +131,31 @@ export interface AnalysisResult {
     potentialSavings: number;
     findings: number;
   }>;
+}
+
+export interface DatasetSummary {
+  dataMonth: string;
+  previousMonth: string;
+  totalMonthlySpend: number;
+  previousMonthlySpend: number;
+  costChange: number;
+  monthChangePercent: number;
+  estimatedMonthlySavings: number;
+  estimatedYearlySavings: number;
+  resourceCount: number;
+  findingCount: number;
+  highSeverityCount: number;
+  mediumSeverityCount: number;
+  lowSeverityCount: number;
+  serviceCount: number;
+  teamCount: number;
+}
+
+export interface AnalyzedDatasetPayload {
+  analysis: AnalysisResult;
+  datasets: Datasets;
+  summary: DatasetSummary;
+  fileNames: string[];
 }
 
 export interface ExecutiveReport {

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  Bot,
+  Clock3,
   FileText,
   LayoutDashboard,
   SearchCheck,
@@ -14,15 +14,15 @@ const links = [
   { href: "/", label: "Upload", icon: UploadCloud },
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/findings", label: "Findings", icon: SearchCheck },
-  { href: "/copilot", label: "AI Copilot", icon: Bot },
   { href: "/report", label: "Report", icon: FileText },
+  { href: "/#history", label: "History", icon: Clock3 },
 ];
 
 export function SidebarNav() {
   const pathname = usePathname();
 
   return (
-    <nav aria-label="Primary navigation" className="flex gap-1 lg:flex-col">
+    <nav aria-label="Primary navigation" className="flex gap-1">
       {links.map((link) => {
         const active = link.href === "/" ? pathname === "/" : pathname.startsWith(link.href);
         const Icon = link.icon;

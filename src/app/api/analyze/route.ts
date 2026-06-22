@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
+import { createDatasetSummary } from "@/lib/active-dataset";
 import { getAnalysis } from "@/lib/analysis";
 import {
+  loadSampleDatasets,
   parseCosts,
   parseMetrics,
   parseRecommendations,
@@ -9,14 +11,28 @@ import {
 } from "@/lib/data-loader";
 import { REQUIRED_UPLOAD_FILE_NAMES } from "@/lib/upload-schema";
 import { validateUploadContents } from "@/lib/upload-validation";
+import type { Datasets } from "@/lib/types";
 
 export const runtime = "nodejs";
+
+async function analyzedPayload(datasets: Datasets, fileNames: string[]) {
+  const analysis = await getAnalysis(datasets);
+  return {
+    analysis,
+    datasets,
+    summary: createDatasetSummary(analysis),
+    fileNames,
+  };
+}
 
 export async function POST(request: Request) {
   try {
     const contentType = request.headers.get("content-type") ?? "";
     if (!contentType.includes("multipart/form-data")) {
-      return NextResponse.json(await getAnalysis());
+      const datasets = await loadSampleDatasets();
+      return NextResponse.json(
+        await analyzedPayload(datasets, [...REQUIRED_UPLOAD_FILE_NAMES]),
+      );
     }
 
     const formData = await request.formData();
@@ -52,14 +68,16 @@ export async function POST(request: Request) {
       return content;
     };
 
-    return NextResponse.json(
-      await getAnalysis({
+    const datasets: Datasets = {
         costs: parseCosts(contentFor("cost_usage.csv")),
         resources: parseResources(contentFor("resource_inventory.csv")),
         metrics: parseMetrics(contentFor("cloudwatch_metrics.csv")),
         recommendations: parseRecommendations(contentFor("optimizer_recommendations.json")),
         trustedAdvisor: parseTrustedAdvisor(contentFor("trusted_advisor_findings.json")),
-      }),
+    };
+
+    return NextResponse.json(
+      await analyzedPayload(datasets, [...REQUIRED_UPLOAD_FILE_NAMES]),
     );
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unable to analyze the data.";

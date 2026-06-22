@@ -55,21 +55,29 @@ export function parseCosts(input: string): CostRecord[] {
   return parseCsv(input).flatMap((row) => {
     if (row.billing_month) {
       const owner = row.owner || `${row.team} owner`;
+      const shared = {
+        resourceId: row.resource_id,
+        resourceName: row.resource_name || row.resource_id,
+        service: row.service,
+        owner,
+        team: row.team,
+        accountId: row.account_id,
+        region: row.region,
+        usageType: row.usage_type,
+        usageAmount: asNumber(row.usage_amount),
+        usageUnit: row.usage_unit,
+        environment: row.environment,
+        project: row.project,
+      };
       return [
         {
+          ...shared,
           month: previousMonth(row.billing_month),
-          resourceId: row.resource_id,
-          service: row.service,
-          owner,
-          team: row.team,
           monthlyCost: asNumber(row.previous_month_cost_usd),
         },
         {
+          ...shared,
           month: row.billing_month,
-          resourceId: row.resource_id,
-          service: row.service,
-          owner,
-          team: row.team,
           monthlyCost: asNumber(row.current_month_cost_usd),
         },
       ];
@@ -77,6 +85,7 @@ export function parseCosts(input: string): CostRecord[] {
     return [{
       month: row.month,
       resourceId: row.resource_id,
+      resourceName: row.resource_name || row.resource_id,
       service: row.service,
       owner: row.owner,
       team: row.team,
@@ -90,6 +99,7 @@ export function parseResources(input: string): ResourceRecord[] {
     const service = row.service || serviceFromType(row.resource_type);
     return {
       resourceId: row.resource_id,
+      resourceName: row.resource_name || row.resource_id,
       service,
       resourceType: row.resource_type,
       status: row.status,
@@ -100,7 +110,11 @@ export function parseResources(input: string): ResourceRecord[] {
       criticality: normalizeRisk(row.criticality || row.business_criticality),
       storageClass:
         row.storage_class || (service === "S3" ? row.size_or_class : undefined),
+      sizeOrClass: row.size_or_class || row.resource_type,
       objectAgeDays: asNumber(row.object_age_days),
+      project: row.project,
+      createdDate: row.created_date,
+      production: String(row.production).toLowerCase() === "true",
     };
   });
 }
@@ -134,6 +148,8 @@ export function parseMetrics(input: string): MetricRecord[] {
         maximum: asNumber(maximum || average),
         unit,
         periodDays: days,
+        metricStart: row.metric_start,
+        metricEnd: row.metric_end,
       });
     };
     addMetric("CPUUtilization", row.avg_cpu_percent, row.max_cpu_percent, "Percent");
@@ -161,6 +177,12 @@ export function parseRecommendations(input: string): OptimizerRecommendation[] {
       record.projected_savings ?? record.estimated_monthly_savings_usd,
     ),
     risk: normalizeRisk(record.risk),
+    service: record.service ? String(record.service) : undefined,
+    finding: record.finding ? String(record.finding) : undefined,
+    currentType: record.current_type ? String(record.current_type) : undefined,
+    recommendedType: record.recommended_type ? String(record.recommended_type) : undefined,
+    confidence: record.confidence ? String(record.confidence) : undefined,
+    reason: record.reason ? String(record.reason) : undefined,
   }));
 }
 
@@ -174,6 +196,15 @@ export function parseTrustedAdvisor(input: string): TrustedAdvisorFinding[] {
     note: String(
       record.note ?? record.recommended_action ?? record.finding ?? "Review the finding.",
     ),
+    service: record.service ? String(record.service) : undefined,
+    estimatedSavings: record.estimated_monthly_savings_usd === undefined
+      ? undefined
+      : numberValue(record.estimated_monthly_savings_usd),
+    recommendedAction: record.recommended_action
+      ? String(record.recommended_action)
+      : undefined,
+    risk: record.risk ? normalizeRisk(record.risk) : undefined,
+    owner: record.owner ? String(record.owner) : undefined,
   }));
 }
 

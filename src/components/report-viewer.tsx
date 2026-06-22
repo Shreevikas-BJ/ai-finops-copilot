@@ -16,18 +16,21 @@ import type { AnalysisResult } from "@/lib/types";
 
 export function ReportViewer({
   analysis,
+  datasetName,
   dataSource,
   generatedAt,
 }: {
   analysis: AnalysisResult;
+  datasetName: string;
   dataSource: string;
   generatedAt: string;
 }) {
-  const report = generateExecutiveReport(analysis, { dataSource, generatedAt });
+  const report = generateExecutiveReport(analysis, { datasetName, dataSource, generatedAt });
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState("");
   const copiedTimer = useRef<number | null>(null);
   const topFindings = analysis.findings.slice(0, 5);
+  const highSeverity = analysis.findings.filter((finding) => finding.severity === "high");
   const costChange = analysis.totalMonthlySpend - analysis.previousMonthlySpend;
 
   useEffect(() => {
@@ -37,13 +40,29 @@ export function ReportViewer({
   }, []);
 
   async function copyReport() {
-    try {
-      await navigator.clipboard.writeText(report.markdown);
+    setError("");
+    const markCopied = () => {
       setCopied(true);
       if (copiedTimer.current !== null) window.clearTimeout(copiedTimer.current);
       copiedTimer.current = window.setTimeout(() => setCopied(false), 1800);
+    };
+    try {
+      await navigator.clipboard.writeText(report.markdown);
+      markCopied();
     } catch {
-      setError("Clipboard access is unavailable. Select the report text and copy it manually.");
+      const textarea = document.createElement("textarea");
+      textarea.value = report.markdown;
+      textarea.style.position = "fixed";
+      textarea.style.opacity = "0";
+      document.body.appendChild(textarea);
+      textarea.select();
+      const copiedWithFallback = document.execCommand("copy");
+      textarea.remove();
+      if (copiedWithFallback) {
+        markCopied();
+      } else {
+        setError("Clipboard access is unavailable. Select the report text and copy it manually.");
+      }
     }
   }
 
@@ -52,7 +71,8 @@ export function ReportViewer({
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
     anchor.href = url;
-    anchor.download = `ai-finops-report-${analysis.dataMonth}.md`;
+    const safeName = datasetName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    anchor.download = `${safeName || "ai-finops"}-report-${analysis.dataMonth}.md`;
     anchor.click();
     URL.revokeObjectURL(url);
   }
@@ -61,7 +81,8 @@ export function ReportViewer({
     <>
       <div className="mb-4 flex flex-col justify-between gap-3 rounded-2xl border border-white/[0.075] bg-[#0d1219] p-4 sm:flex-row sm:items-center">
         <div>
-          <p className="text-sm font-medium text-slate-200">{report.period} | {dataSource}</p>
+          <p className="text-sm font-medium text-slate-200">{report.period} | {datasetName}</p>
+          <p className="mt-1 text-[10px] uppercase tracking-wider text-slate-600">{dataSource}</p>
           <p className="mt-1 text-xs text-slate-500">Copy or download the full Markdown report.</p>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row">
@@ -96,21 +117,23 @@ export function ReportViewer({
                 <FileCheck2 className="size-4" /> Executive brief
               </div>
               <h2 className="mt-4 text-2xl font-semibold tracking-[-0.035em] text-white sm:text-3xl">
-                AI FinOps Executive Report
+                {report.title}
               </h2>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-400">{report.summary}</p>
             </div>
             <div className="shrink-0 rounded-xl border border-white/[0.08] bg-black/10 p-3.5 text-xs text-slate-400">
-              <p className="font-semibold text-slate-200">{dataSource}</p>
+              <p className="font-semibold text-slate-200">{datasetName}</p>
+              <p className="mt-1 text-[10px] uppercase tracking-wider text-slate-600">{dataSource}</p>
               <p className="mt-1 flex items-center gap-1.5"><CalendarDays className="size-3.5" /> {new Date(generatedAt).toLocaleString()}</p>
             </div>
           </div>
         </header>
 
         <div className="p-5 sm:p-8">
-          <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
             {[
               ["Current monthly spend", currency.format(analysis.totalMonthlySpend)],
+              ["Previous monthly spend", currency.format(analysis.previousMonthlySpend)],
               ["Month-over-month change", `${currency.format(costChange)} (${percent(analysis.monthChangePercent)})`],
               ["Estimated monthly savings", currency.format(analysis.estimatedMonthlySavings)],
               ["Estimated annual savings", currency.format(analysis.estimatedYearlySavings)],
@@ -145,7 +168,7 @@ export function ReportViewer({
               </div>
             </section>
             <section>
-              <h3 className="text-sm font-semibold text-white">Top waste findings</h3>
+              <h3 className="text-sm font-semibold text-white">Top savings opportunities</h3>
               <div className="mt-3 space-y-2">
                 {topFindings.length === 0 ? (
                   <div className="rounded-lg border border-dashed border-white/[0.08] px-4 py-8 text-center text-xs text-slate-500">
@@ -163,6 +186,25 @@ export function ReportViewer({
               </div>
             </section>
           </div>
+
+          <section className="mt-8">
+            <h3 className="text-sm font-semibold text-white">High severity findings</h3>
+            {highSeverity.length === 0 ? (
+              <p className="mt-3 text-xs text-slate-500">No high severity findings were detected.</p>
+            ) : (
+              <div className="mt-3 grid gap-2 lg:grid-cols-2">
+                {highSeverity.map((finding) => (
+                  <div key={`high-${finding.id}`} className="rounded-xl border border-rose-400/12 bg-rose-400/[0.025] p-3.5">
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="truncate font-mono text-xs text-slate-200">{finding.resourceId}</span>
+                      <span className="font-mono text-xs font-semibold text-rose-300">{currency.format(finding.estimatedSavings)}/month</span>
+                    </div>
+                    <p className="mt-1.5 text-xs text-slate-500">{finding.issueType} | {finding.team}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
 
           <section className="mt-8">
             <h3 className="text-sm font-semibold text-white">Team ownership summary</h3>
@@ -218,6 +260,34 @@ export function ReportViewer({
                   <pre className="whitespace-pre-wrap border-t border-white/[0.06] px-4 py-4 font-sans text-xs leading-6 text-slate-500">{finding.ticketBody}</pre>
                 </details>
               ))}
+            </div>
+          </section>
+
+          <section className="mt-8">
+            <h3 className="text-sm font-semibold text-white">Evidence table</h3>
+            <div className="mt-3 overflow-x-auto rounded-xl border border-white/[0.07]">
+              <table className="w-full min-w-[760px] text-left text-xs">
+                <thead className="bg-white/[0.025] text-slate-500">
+                  <tr>
+                    <th className="px-4 py-3 font-medium">Resource ID</th>
+                    <th className="px-4 py-3 font-medium">Service</th>
+                    <th className="px-4 py-3 font-medium">Team</th>
+                    <th className="px-4 py-3 font-medium">Severity</th>
+                    <th className="px-4 py-3 font-medium">Primary evidence</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/[0.06] text-slate-400">
+                  {analysis.findings.slice(0, 10).map((finding) => (
+                    <tr key={`evidence-${finding.id}`}>
+                      <td className="px-4 py-3 font-mono text-slate-200">{finding.resourceId}</td>
+                      <td className="px-4 py-3">{finding.service}</td>
+                      <td className="px-4 py-3">{finding.team}</td>
+                      <td className="px-4 py-3"><SeverityBadge severity={finding.severity} /></td>
+                      <td className="max-w-md px-4 py-3 leading-5">{finding.evidence[0]}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </section>
         </div>

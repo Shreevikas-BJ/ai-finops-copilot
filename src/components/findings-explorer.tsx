@@ -6,7 +6,13 @@ import { ServiceMark, SeverityBadge } from "@/components/ui";
 import { currency, percent } from "@/lib/format";
 import type { Finding, Severity } from "@/lib/types";
 
-export function FindingsExplorer({ findings }: { findings: Finding[] }) {
+export function FindingsExplorer({
+  findings,
+  limit,
+}: {
+  findings: Finding[];
+  limit?: number;
+}) {
   const [query, setQuery] = useState("");
   const [severity, setSeverity] = useState<Severity | "all">("all");
   const [service, setService] = useState("all");
@@ -18,7 +24,7 @@ export function FindingsExplorer({ findings }: { findings: Finding[] }) {
   const filtered = findings.filter((finding) => {
     const matchesQuery =
       !normalized ||
-      [finding.resourceId, finding.issueType, finding.owner, finding.team]
+      [finding.resourceId, finding.resourceName, finding.issueType, finding.owner, finding.team]
         .join(" ")
         .toLowerCase()
         .includes(normalized);
@@ -29,6 +35,7 @@ export function FindingsExplorer({ findings }: { findings: Finding[] }) {
       (team === "all" || finding.team === team)
     );
   });
+  const visibleFindings = limit ? filtered.slice(0, limit) : filtered;
 
   return (
     <>
@@ -70,7 +77,7 @@ export function FindingsExplorer({ findings }: { findings: Finding[] }) {
       </div>
 
       <div className="mb-3 flex items-center justify-between px-1 text-xs text-slate-500">
-        <span>{filtered.length} of {findings.length} findings</span>
+        <span>Showing {visibleFindings.length} of {filtered.length} matching findings</span>
         <span>Sorted by severity + savings</span>
       </div>
 
@@ -86,7 +93,7 @@ export function FindingsExplorer({ findings }: { findings: Finding[] }) {
         </div>
       ) : (
         <div className="space-y-3">
-          {filtered.map((finding) => (
+          {visibleFindings.map((finding) => (
             <article key={finding.id} className="rounded-2xl border border-white/[0.075] bg-[#0d1219] p-5 sm:p-6">
               <div className="flex flex-col justify-between gap-4 xl:flex-row xl:items-start">
                 <div className="flex min-w-0 items-start gap-3">
@@ -96,6 +103,7 @@ export function FindingsExplorer({ findings }: { findings: Finding[] }) {
                       <h2 className="font-mono text-sm font-semibold text-white">{finding.resourceId}</h2>
                       <SeverityBadge severity={finding.severity} />
                     </div>
+                    <p className="mt-1 truncate text-xs text-slate-500">{finding.resourceName}</p>
                     <p className="mt-1.5 text-sm font-medium text-slate-300">{finding.issueType}</p>
                     <p className="mt-1 text-xs text-slate-500">{finding.service} · {finding.region} · {finding.environment}</p>
                   </div>

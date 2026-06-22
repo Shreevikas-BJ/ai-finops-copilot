@@ -57,6 +57,7 @@ export function recommendOptimizations(
       {
         id: signal.resourceId,
         resourceId: signal.resourceId,
+        resourceName: resource.resourceName,
         service: resource.service,
         owner: resource.owner,
         team: resource.team,

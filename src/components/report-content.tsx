@@ -20,13 +20,14 @@ export function ReportContent() {
   return (
     <>
       <PageHeader
-        eyebrow={`Decision-ready output | ${activeDataset.label}`}
+        eyebrow={`Decision-ready output | ${activeDataset.name}`}
         title="Executive FinOps report"
         description="A polished summary of cost, savings, ownership, risk, and ticket-ready actions from the active dataset."
       />
       <ReportViewer
         analysis={activeDataset.analysis}
-        dataSource={activeDataset.label}
+        datasetName={activeDataset.name}
+        dataSource={activeDataset.sourceLabel}
         generatedAt={new Date().toISOString()}
       />
     </>

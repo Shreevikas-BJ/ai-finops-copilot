@@ -21,6 +21,7 @@ export async function POST(request: Request) {
     const body = (await request.json()) as {
       enhance?: boolean;
       analysis?: AnalysisResult;
+      datasetName?: string;
       dataSource?: string;
     };
     if (!isAnalysisResult(body.analysis)) {
@@ -31,6 +32,7 @@ export async function POST(request: Request) {
     }
 
     const report = generateExecutiveReport(body.analysis, {
+      datasetName: body.datasetName || "Active dataset",
       dataSource: body.dataSource || "Active dataset",
     });
     if (!body.enhance || !hasGroqConfiguration()) {

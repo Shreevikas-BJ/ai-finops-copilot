@@ -27,13 +27,13 @@ export function DataSourceIndicator() {
     <Link
       href="/"
       title="Change active dataset"
-      className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[11px] font-medium ${
+      className={`inline-flex max-w-48 items-center gap-2 rounded-full border px-3 py-1.5 text-[11px] font-medium ${
         activeDataset.source === "sample"
           ? "border-emerald-400/15 bg-emerald-400/[0.055] text-emerald-200"
           : "border-sky-400/15 bg-sky-400/[0.055] text-sky-200"
       }`}
     >
-      <Icon className="size-3.5" /> {activeDataset.label}
+      <Icon className="size-3.5 shrink-0" /> <span className="truncate">{activeDataset.name}</span>
     </Link>
   );
 }

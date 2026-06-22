@@ -25,22 +25,36 @@ Calculations and detection stay deterministic and auditable:
 
 ## Product surfaces
 
-- Upload-first home page with clear Sample Data and Custom Upload paths.
-- Dashboard with active-dataset spend, savings, severity, service, and team views.
-- Findings explorer with search and severity, service, and team filters.
-- Groq-powered Copilot grounded only in the active dataset.
-- Executive report with copy and Markdown download actions.
-- Server routes at `/api/analyze`, `/api/copilot`, and `/api/report`.
+- Upload-first home page with Sample Data, named Custom Upload, and History paths.
+- Full-width dashboard with expandable cost, savings, severity, service, team, and resource details.
+- Embedded Groq Copilot beside the dashboard on desktop and below it on mobile.
+- Findings explorer inside the dashboard, with a separate focused page still available.
+- Three-dataset browser history with load, rename, and delete controls.
+- Executive report with copy, Markdown download, high-severity findings, and an evidence table.
+- Downloadable ZIP containing all five sample files in the documented upload schemas.
+- Server routes at `/api/analyze`, `/api/copilot`, `/api/report`, and `/api/sample-data`.
 
 ## Product flow
 
 1. Open the app on the Upload page.
-2. Choose **Use Sample Data** or validate all five custom files.
-3. The server runs deterministic analysis and returns the calculated result.
-4. The analyzed dataset becomes active and is persisted in browser localStorage.
-5. Dashboard, Findings, AI Copilot, and Report all read that same active dataset.
+2. Choose **Use Sample Data**, name and validate all five custom files, or load a saved dataset.
+3. The server returns parsed records, deterministic analysis, and a compact dataset summary.
+4. The dataset becomes active and is added to browser history in localStorage.
+5. The latest three datasets are retained. Adding a fourth removes the oldest.
+6. The dashboard, embedded Copilot, Findings page, and Report all read the same active dataset.
 
-Loading another source replaces the active dataset. Clearing browser storage or using **Clear active data** returns the app to its empty state.
+Loading history switches every data-aware surface immediately. Clearing active data keeps history available for later loading.
+
+## Dataset-grounded retrieval
+
+The Copilot uses deterministic lexical retrieval instead of sending full files to Groq:
+
+1. `buildDatasetChunks(activeDataset)` creates compact chunks from cost rows, inventory, metrics, optimizer recommendations, advisor findings, generated findings, and dashboard summaries.
+2. `retrieveRelevantContext(question, chunks)` scores resource IDs, services, teams, severity, finding types, and cost-related terms.
+3. Only the top 8 to 12 relevant chunks are sent to `/api/copilot`.
+4. `buildCopilotPrompt(...)` combines those chunks with the compact dataset summary and strict grounding instructions.
+
+No paid embeddings or external vector database are required. Groq output is limited to 650 tokens. If the retrieved context does not contain an answer, Copilot returns: `I could not find that in the active dataset.`
 
 ## Detection rules
 
@@ -64,6 +78,7 @@ The bundled sample includes 24 resources, five teams, 15 findings, and two month
 - Tailwind CSS 4
 - Lucide icons and lightweight SVG/CSS charts
 - Groq OpenAI-compatible chat completions API
+- Deterministic lexical RAG over the active browser dataset
 - Local CSV and JSON sample files
 - Vercel-ready Node.js route handlers
 
@@ -104,6 +119,7 @@ pnpm install --frozen-lockfile
 pnpm lint
 pnpm typecheck
 pnpm build
+pnpm check:copy
 pnpm check:no-em-dash
 ```
 
@@ -128,6 +144,8 @@ The `data/` directory contains:
 - `trusted_advisor_findings.json`
 
 Uploaded files must use those exact names and all five must be selected together. Each file is limited to 2 MB and is processed in memory for one request. The built-in sample workflow remains available without uploading files.
+
+Use **Download Sample Data** on the Upload page to download a ZIP with all five files. The ZIP export uses the documented schemas and can be uploaded back into the app as a valid custom dataset.
 
 ## Upload File Requirements
 
@@ -285,6 +303,7 @@ Purpose:
 
 - “Why did my cloud bill increase?”
 - “What should I fix first?”
+- “Show me the high severity findings.”
 - “Create an action plan for the DataTeam.”
 - “Generate Jira tickets for high-priority savings.”
 - “Which production change has the highest risk-adjusted savings?”
@@ -294,17 +313,20 @@ Purpose:
 - `GROQ_API_KEY` is read only inside server route handlers.
 - `.env.local`, `.env`, and Vercel project files are gitignored.
 - User questions are length-limited and wrapped in a safety-focused system prompt.
+- Full raw files are never sent to Groq. Only the compact summary and top retrieved chunks are sent.
+- Retrieved context is capped at 12 chunks and Groq output is capped at 650 tokens.
 - The LLM is told never to claim it changed AWS resources or created real tickets.
+- The LLM is told not to add general cloud knowledge or external recommendations.
 - The MVP is read-only and accepts no AWS credentials.
-- Uploaded data is parsed in memory and not stored.
+- Uploaded data is parsed in memory and retained only in browser localStorage for the latest three datasets.
 
 ## Screenshots
 
 Create a `docs/screenshots/` directory when you are ready to add portfolio images. Recommended captures:
 
-1. `dashboard.png` - 1440 × 1000, showing KPI cards and both charts.
+1. `dashboard.png` - 1440 × 1000, showing expandable KPI cards and the embedded Copilot.
 2. `findings.png` - filterable findings with evidence and recommended actions.
-3. `copilot.png` - one completed answer to “What should I fix first?”
+3. `copilot.png` - one dataset-grounded answer with resource source chips.
 4. `report.png` - executive report with ticket-ready action items.
 
 Then embed them near the Product surfaces section with standard Markdown image links. Keep screenshots free of real API keys or customer cost data.

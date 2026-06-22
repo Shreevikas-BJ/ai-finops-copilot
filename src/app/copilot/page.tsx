@@ -1,8 +1,5 @@
-import type { Metadata } from "next";
-import { CopilotWorkspace } from "@/components/copilot-workspace";
-
-export const metadata: Metadata = { title: "AI Copilot" };
+import { redirect } from "next/navigation";
 
 export default function CopilotPage() {
-  return <CopilotWorkspace />;
+  redirect("/dashboard#copilot");
 }

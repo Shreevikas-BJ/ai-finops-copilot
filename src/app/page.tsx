@@ -6,8 +6,8 @@ export default function UploadHomePage() {
     <>
       <PageHeader
         eyebrow="Start here"
-        title="Choose your cloud cost data"
-        description="Load the built-in sample or validate and analyze your own five-file dataset. The active dataset will power every workspace in the app."
+        title="Start with a dataset"
+        description="Use the built-in sample, upload and name five custom files, or load one of your latest three datasets. Analysis opens in one dashboard with an embedded Copilot."
       />
       <UploadWorkbench />
     </>

@@ -2,20 +2,30 @@
 
 import { createContext, useContext, useSyncExternalStore } from "react";
 import {
-  datasetSourceLabel,
-  isActiveDataset,
+  createActiveDataset,
+  isDatasetStore,
   type ActiveDataset,
   type DatasetSource,
+  type DatasetStore,
 } from "@/lib/active-dataset";
-import type { AnalysisResult } from "@/lib/types";
+import type { AnalyzedDatasetPayload } from "@/lib/types";
 
-const STORAGE_KEY = "ai-finops-copilot.active-dataset.v1";
-const DATASET_EVENT = "ai-finops-active-dataset-change";
+const STORAGE_KEY = "ai-finops-copilot.dataset-store.v2";
+const DATASET_EVENT = "ai-finops-dataset-store-change";
+const EMPTY_STORE: DatasetStore = { version: 2, activeId: null, history: [] };
 
 interface ActiveDatasetContextValue {
   activeDataset: ActiveDataset | null;
+  history: ActiveDataset[];
   ready: boolean;
-  activateDataset: (source: DatasetSource, analysis: AnalysisResult) => void;
+  activateDataset: (input: {
+    name: string;
+    source: DatasetSource;
+    payload: AnalyzedDatasetPayload;
+  }) => void;
+  loadDataset: (id: string) => void;
+  renameDataset: (id: string, name: string) => void;
+  deleteDataset: (id: string) => void;
   clearDataset: () => void;
 }
 
@@ -50,13 +60,35 @@ function getServerClientSnapshot() {
   return false;
 }
 
-function parseDataset(serialized: string | null) {
-  if (!serialized) return null;
+function parseStore(serialized: string | null): DatasetStore {
+  if (!serialized) return EMPTY_STORE;
   try {
     const value: unknown = JSON.parse(serialized);
-    return isActiveDataset(value) ? value : null;
+    return isDatasetStore(value) ? value : EMPTY_STORE;
   } catch {
-    return null;
+    return EMPTY_STORE;
+  }
+}
+
+function readStore() {
+  return parseStore(window.localStorage.getItem(STORAGE_KEY));
+}
+
+function writeStore(store: DatasetStore) {
+  let nextStore = store;
+  while (true) {
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(nextStore));
+      window.dispatchEvent(new Event(DATASET_EVENT));
+      return;
+    } catch {
+      if (nextStore.history.length <= 1) {
+        throw new Error(
+          "This dataset is too large for browser history. Reduce the upload size and try again.",
+        );
+      }
+      nextStore = { ...nextStore, history: nextStore.history.slice(0, -1) };
+    }
   }
 }
 
@@ -71,28 +103,68 @@ export function ActiveDatasetProvider({ children }: { children: React.ReactNode 
     getClientSnapshot,
     getServerClientSnapshot,
   );
-  const activeDataset = parseDataset(serialized);
+  const store = parseStore(serialized);
+  const activeDataset =
+    store.history.find((dataset) => dataset.id === store.activeId) ?? null;
 
-  function activateDataset(source: DatasetSource, analysis: AnalysisResult) {
-    const dataset: ActiveDataset = {
-      version: 1,
-      source,
-      label: datasetSourceLabel(source),
-      loadedAt: new Date().toISOString(),
-      analysis,
-    };
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(dataset));
-    window.dispatchEvent(new Event(DATASET_EVENT));
+  function activateDataset(input: {
+    name: string;
+    source: DatasetSource;
+    payload: AnalyzedDatasetPayload;
+  }) {
+    const dataset = createActiveDataset(input);
+    const current = readStore();
+    writeStore({
+      version: 2,
+      activeId: dataset.id,
+      history: [dataset, ...current.history].slice(0, 3),
+    });
+  }
+
+  function loadDataset(id: string) {
+    const current = readStore();
+    if (!current.history.some((dataset) => dataset.id === id)) return;
+    writeStore({ ...current, activeId: id });
+  }
+
+  function renameDataset(id: string, name: string) {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    const current = readStore();
+    writeStore({
+      ...current,
+      history: current.history.map((dataset) =>
+        dataset.id === id ? { ...dataset, name: trimmed } : dataset,
+      ),
+    });
+  }
+
+  function deleteDataset(id: string) {
+    const current = readStore();
+    writeStore({
+      ...current,
+      activeId: current.activeId === id ? null : current.activeId,
+      history: current.history.filter((dataset) => dataset.id !== id),
+    });
   }
 
   function clearDataset() {
-    window.localStorage.removeItem(STORAGE_KEY);
-    window.dispatchEvent(new Event(DATASET_EVENT));
+    const current = readStore();
+    writeStore({ ...current, activeId: null });
   }
 
   return (
     <ActiveDatasetContext.Provider
-      value={{ activeDataset, ready, activateDataset, clearDataset }}
+      value={{
+        activeDataset,
+        history: store.history,
+        ready,
+        activateDataset,
+        loadDataset,
+        renameDataset,
+        deleteDataset,
+        clearDataset,
+      }}
     >
       {children}
     </ActiveDatasetContext.Provider>

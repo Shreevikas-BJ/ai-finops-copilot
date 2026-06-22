@@ -22,9 +22,9 @@ export function FindingsContent() {
   return (
     <>
       <PageHeader
-        eyebrow={`Deterministic analysis | ${activeDataset.label}`}
+        eyebrow={`Deterministic analysis | ${activeDataset.name}`}
         title="Explainable savings findings"
-        description={`Every item maps active dataset evidence to an owner, risk note, and recommended action. ${currency.format(analysis.estimatedMonthlySavings)} in monthly savings is currently identified.`}
+        description={`Every item maps ${activeDataset.sourceLabel} evidence to an owner, risk note, and recommended action. ${currency.format(analysis.estimatedMonthlySavings)} in monthly savings is currently identified.`}
       />
       <FindingsExplorer findings={analysis.findings} />
     </>
