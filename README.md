@@ -116,7 +116,159 @@ The `data/` directory contains:
 - `optimizer_recommendations.json`
 - `trusted_advisor_findings.json`
 
-Uploaded files must use one of those exact names. Each upload is limited to 2 MB, overrides the matching sample file for one request, and is not persisted.
+Uploaded files must use those exact names and all five must be selected together. Each file is limited to 2 MB and is processed in memory for one request. The built-in sample workflow remains available without uploading files.
+
+## Upload File Requirements
+
+The upload workspace validates file presence, schemas, required values, formats, and related resource IDs in the browser before enabling **Analyze Upload**. CSV column names and JSON field names are case-sensitive and must match the names below.
+
+### cost_usage.csv
+
+Accepted format: CSV with a header row.
+
+Required columns:
+
+- `billing_month`
+- `service`
+- `resource_id`
+- `resource_name`
+- `account_id`
+- `region`
+- `usage_type`
+- `usage_amount`
+- `usage_unit`
+- `current_month_cost_usd`
+- `previous_month_cost_usd`
+- `team`
+- `environment`
+- `project`
+
+Purpose:
+
+- Cost analysis
+- Service spend reporting
+- Monthly cost comparison
+- Team and project cost allocation
+
+### resource_inventory.csv
+
+Accepted format: CSV with a header row.
+
+Required columns:
+
+- `resource_id`
+- `resource_type`
+- `resource_name`
+- `status`
+- `size_or_class`
+- `region`
+- `team`
+- `environment`
+- `project`
+- `created_date`
+- `production`
+- `business_criticality`
+- `tags`
+
+Purpose:
+
+- Resource ownership tracking
+- Environment classification
+- Risk and business context analysis
+
+### cloudwatch_metrics.csv
+
+Accepted format: CSV with a header row.
+
+Required columns:
+
+- `resource_id`
+- `metric_start`
+- `metric_end`
+- `avg_cpu_percent`
+- `max_cpu_percent`
+- `avg_memory_percent`
+- `network_in_gb`
+- `network_out_gb`
+- `read_iops`
+- `write_iops`
+- `object_count`
+- `avg_object_age_days`
+
+Purpose:
+
+- Idle resource detection
+- Rightsizing analysis
+- Traffic and utilization analysis
+- Storage optimization insights
+
+### optimizer_recommendations.json
+
+Accepted format: a JSON array of recommendation objects.
+
+Expected structure:
+
+```json
+[
+  {
+    "resource_id": "i-ec2-001",
+    "service": "EC2",
+    "finding": "Over-provisioned",
+    "current_type": "m5.xlarge",
+    "recommended_type": "t3.medium",
+    "estimated_monthly_savings_usd": 82,
+    "confidence": "High",
+    "reason": "Low CPU usage for 30 days."
+  }
+]
+```
+
+Purpose:
+
+- Rightsizing recommendations
+- Estimated savings analysis
+
+### trusted_advisor_findings.json
+
+Accepted format: a JSON array of finding objects.
+
+Expected structure:
+
+```json
+[
+  {
+    "check_id": "TA-001",
+    "category": "Cost Optimization",
+    "resource_id": "vol-ebs-002",
+    "service": "EBS",
+    "status": "warning",
+    "finding": "Unattached EBS volume",
+    "estimated_monthly_savings_usd": 100,
+    "recommended_action": "Delete volume if no dependency exists.",
+    "risk": "Low",
+    "owner": "Analytics"
+  }
+]
+```
+
+Purpose:
+
+- Trusted Advisor-style optimization findings
+- Cost-saving opportunities
+- Operational recommendations
+
+### Upload validation rules
+
+- All five files must be present and use the exact expected file names.
+- CSV files must contain every required column listed above.
+- JSON files must parse successfully and contain a top-level array.
+- Every JSON object must contain its documented required fields.
+- `resource_id` is required and must match `resource_inventory.csv` across related files where applicable.
+- `current_month_cost_usd`, `previous_month_cost_usd`, and `estimated_monthly_savings_usd` must be numeric without currency symbols.
+- Dates must use `YYYY-MM-DD` and represent real calendar dates.
+- `billing_month` must use `YYYY-MM`.
+- Optional CloudWatch metric values may be blank or `null`; their columns must still be present.
+- Validation errors identify the file, problem, and a suggested correction. Analysis remains disabled until every error is resolved.
 
 ## Demo questions
 

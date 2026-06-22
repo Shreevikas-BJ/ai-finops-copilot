@@ -14,6 +14,11 @@ export function analyzeUsage(datasets: Datasets): OptimizationSignal[] {
       .filter((metric) => metric.metricName === "CPUUtilization")
       .map((metric) => [metric.resourceId, metric]),
   );
+  const objectAgeMetrics = new Map(
+    datasets.metrics
+      .filter((metric) => metric.metricName === "AverageObjectAge")
+      .map((metric) => [metric.resourceId, metric]),
+  );
   const signals: OptimizationSignal[] = [];
 
   datasets.resources.forEach((resource) => {
@@ -66,19 +71,22 @@ export function analyzeUsage(datasets: Datasets): OptimizationSignal[] {
       });
     }
 
+    const objectAgeDays =
+      resource.objectAgeDays || objectAgeMetrics.get(resource.resourceId)?.average || 0;
+
     if (
       resource.service === "S3" &&
       resource.storageClass === "Standard" &&
-      resource.objectAgeDays > 60
+      objectAgeDays > 60
     ) {
       signals.push({
         resourceId: resource.resourceId,
         issueType: "S3 storage class opportunity",
         evidence: [
-          `Storage class is Standard and average object age is ${resource.objectAgeDays} days.`,
+          `Storage class is Standard and average object age is ${objectAgeDays} days.`,
           "Rule triggers when Standard objects are older than 60 days.",
         ],
-        savingsRatio: resource.objectAgeDays > 120 ? 0.5 : 0.45,
+        savingsRatio: objectAgeDays > 120 ? 0.5 : 0.45,
         recommendedAction:
           "Review access patterns, then add a lifecycle transition to Intelligent-Tiering or an appropriate archive tier.",
       });

@@ -1,4 +1,9 @@
-export function parseCsv(input: string): Record<string, string>[] {
+export interface CsvTable {
+  headers: string[];
+  rows: Record<string, string>[];
+}
+
+export function parseCsvTable(input: string): CsvTable {
   const rows: string[][] = [];
   let row: string[] = [];
   let field = "";
@@ -32,10 +37,20 @@ export function parseCsv(input: string): Record<string, string>[] {
     if (row.some(Boolean)) rows.push(row);
   }
 
-  const [headers = [], ...values] = rows;
-  return values.map((valuesRow) =>
-    Object.fromEntries(headers.map((header, index) => [header, valuesRow[index] ?? ""])),
+  const [rawHeaders = [], ...values] = rows;
+  const headers = rawHeaders.map((header, index) =>
+    index === 0 ? header.replace(/^\uFEFF/, "") : header,
   );
+  return {
+    headers,
+    rows: values.map((valuesRow) =>
+      Object.fromEntries(headers.map((header, index) => [header, valuesRow[index] ?? ""])),
+    ),
+  };
+}
+
+export function parseCsv(input: string): Record<string, string>[] {
+  return parseCsvTable(input).rows;
 }
 
 export function asNumber(value: string | undefined): number {
