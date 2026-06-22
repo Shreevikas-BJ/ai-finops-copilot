@@ -1,0 +1,15 @@
+resource_id,metric_name,average,maximum,unit,period_days
+i-0a1f2d3c4b5a6e01,CPUUtilization,2.1,8.7,Percent,30
+i-0b2f3d4c5b6a7e02,CPUUtilization,4.2,13.8,Percent,30
+i-0c3f4d5c6b7a8e03,CPUUtilization,1.8,9.1,Percent,30
+i-0d4f5d6c7b8a9e04,CPUUtilization,3.2,12.4,Percent,30
+i-0e5f6d7c8b9a0e05,CPUUtilization,42.5,87.1,Percent,30
+i-0f6f7d8c9b0a1e06,CPUUtilization,28.7,76.4,Percent,30
+i-0g7f8d9c0b1a2e07,CPUUtilization,61.2,94.8,Percent,30
+i-0h8f9d0c1b2a3e08,CPUUtilization,18.4,52.7,Percent,30
+db-finops-prod-01,CPUUtilization,5.8,22.4,Percent,30
+db-analytics-warehouse,CPUUtilization,38.2,78.6,Percent,30
+db-ml-features-dev,CPUUtilization,8.1,26.7,Percent,30
+nat-0a11b22c33d44e01,BytesOutToDestination,948.2,1290.4,GB,30
+nat-0b22c33d44e55f02,BytesOutToDestination,411.6,640.8,GB,30
+nat-0c33d44e55f66a03,BytesOutToDestination,502.1,718.3,GB,30

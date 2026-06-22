@@ -1,0 +1,12 @@
+[
+  {"resource_id":"i-0a1f2d3c4b5a6e01","source":"Compute Optimizer","recommendation":"Stop on a schedule or downsize after owner validation.","projected_savings":357,"risk":"low"},
+  {"resource_id":"i-0b2f3d4c5b6a7e02","source":"Compute Optimizer","recommendation":"Downsize to c7g.large or stop outside staging hours.","projected_savings":264,"risk":"medium"},
+  {"resource_id":"i-0c3f4d5c6b7a8e03","source":"Compute Optimizer","recommendation":"Stop the dev node and restore from IaC when needed.","projected_savings":242,"risk":"low"},
+  {"resource_id":"i-0d4f5d6c7b8a9e04","source":"Compute Optimizer","recommendation":"Replace the always-on GPU sandbox with an on-demand schedule.","projected_savings":162,"risk":"medium"},
+  {"resource_id":"db-finops-prod-01","source":"Compute Optimizer","recommendation":"Benchmark one size down during a maintenance window.","projected_savings":833,"risk":"high"},
+  {"resource_id":"db-ml-features-dev","source":"Compute Optimizer","recommendation":"Downsize the development database to db.r6g.large.","projected_savings":388,"risk":"medium"},
+  {"resource_id":"s3-raw-data-prod","source":"S3 Storage Lens","recommendation":"Move objects older than 60 days to Intelligent-Tiering.","projected_savings":480,"risk":"low"},
+  {"resource_id":"s3-analytics-lake","source":"S3 Storage Lens","recommendation":"Add a lifecycle rule for cold partitions.","projected_savings":324,"risk":"low"},
+  {"resource_id":"s3-dev-build-artifacts","source":"S3 Storage Lens","recommendation":"Expire disposable artifacts after 45 days.","projected_savings":143,"risk":"low"},
+  {"resource_id":"s3-platform-logs","source":"S3 Storage Lens","recommendation":"Transition logs to Glacier Instant Retrieval after 90 days.","projected_savings":64,"risk":"medium"}
+]

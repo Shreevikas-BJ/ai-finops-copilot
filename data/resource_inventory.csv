@@ -1,0 +1,25 @@
+resource_id,service,resource_type,status,owner,team,region,environment,criticality,storage_class,object_age_days
+i-0a1f2d3c4b5a6e01,EC2,m5.xlarge,running,Aisha Khan,DataTeam,us-east-1,dev,low,,0
+i-0b2f3d4c5b6a7e02,EC2,c5.xlarge,running,Marco Ruiz,Platform,us-east-1,staging,medium,,0
+i-0c3f4d5c6b7a8e03,EC2,r5.large,running,Priya Shah,Analytics,us-west-2,dev,low,,0
+i-0d4f5d6c7b8a9e04,EC2,g4dn.xlarge,running,Noah Williams,ML,us-east-1,sandbox,low,,0
+i-0e5f6d7c8b9a0e05,EC2,m6i.2xlarge,running,Aisha Khan,DataTeam,us-east-1,prod,high,,0
+i-0f6f7d8c9b0a1e06,EC2,c6i.2xlarge,running,Elena Park,DevOps,us-east-2,prod,high,,0
+i-0g7f8d9c0b1a2e07,EC2,g5.xlarge,running,Noah Williams,ML,us-west-2,prod,high,,0
+i-0h8f9d0c1b2a3e08,EC2,m6i.xlarge,running,Priya Shah,Analytics,us-west-2,prod,medium,,0
+vol-01a2b3c4d5e6f001,EBS,gp3,unattached,Aisha Khan,DataTeam,us-east-1,dev,low,,0
+vol-02b3c4d5e6f7a002,EBS,gp3,in-use,Marco Ruiz,Platform,us-east-1,prod,high,,0
+vol-03c4d5e6f7a8b003,EBS,io2,unattached,Noah Williams,ML,us-west-2,sandbox,low,,0
+vol-04d5e6f7a8b9c004,EBS,gp2,unattached,Elena Park,DevOps,us-east-2,dev,low,,0
+vol-05e6f7a8b9c0d005,EBS,gp3,in-use,Priya Shah,Analytics,us-west-2,prod,medium,,0
+db-finops-prod-01,RDS,db.r6g.2xlarge,available,Marco Ruiz,Platform,us-east-1,prod,high,,0
+db-analytics-warehouse,RDS,db.r6g.xlarge,available,Priya Shah,Analytics,us-west-2,prod,high,,0
+db-ml-features-dev,RDS,db.r6g.xlarge,available,Noah Williams,ML,us-east-1,dev,medium,,0
+nat-0a11b22c33d44e01,NAT Gateway,nat-gateway,available,Marco Ruiz,Platform,us-east-1,prod,high,,0
+nat-0b22c33d44e55f02,NAT Gateway,nat-gateway,available,Elena Park,DevOps,us-east-2,staging,medium,,0
+nat-0c33d44e55f66a03,NAT Gateway,nat-gateway,available,Aisha Khan,DataTeam,us-east-1,prod,high,,0
+s3-raw-data-prod,S3,bucket,active,Aisha Khan,DataTeam,us-east-1,prod,high,Standard,145
+s3-analytics-lake,S3,bucket,active,Priya Shah,Analytics,us-west-2,prod,high,Standard,92
+s3-model-artifacts,S3,bucket,active,Noah Williams,ML,us-west-2,prod,high,Intelligent-Tiering,38
+s3-dev-build-artifacts,S3,bucket,active,Elena Park,DevOps,us-east-2,dev,low,Standard,76
+s3-platform-logs,S3,bucket,active,Marco Ruiz,Platform,us-east-1,prod,medium,Standard,180

@@ -1,0 +1,9 @@
+[
+  {"resource_id":"vol-01a2b3c4d5e6f001","category":"Cost optimization","check":"Underutilized EBS volumes","status":"warning","note":"Volume is unattached and has had no read/write operations for 30 days."},
+  {"resource_id":"vol-03c4d5e6f7a8b003","category":"Cost optimization","check":"Underutilized EBS volumes","status":"warning","note":"Provisioned IOPS volume is unattached."},
+  {"resource_id":"vol-04d5e6f7a8b9c004","category":"Cost optimization","check":"Underutilized EBS volumes","status":"warning","note":"Legacy gp2 volume is unattached."},
+  {"resource_id":"i-0a1f2d3c4b5a6e01","category":"Cost optimization","check":"Low utilization EC2 instances","status":"warning","note":"Sustained utilization is below the recommended threshold."},
+  {"resource_id":"db-finops-prod-01","category":"Cost optimization","check":"Idle RDS DB instances","status":"warning","note":"CPU has remained low, but production criticality requires a change window."},
+  {"resource_id":"nat-0a11b22c33d44e01","category":"Cost optimization","check":"NAT Gateway data processing","status":"warning","note":"Data processing charges increased materially month over month."},
+  {"resource_id":"s3-raw-data-prod","category":"Cost optimization","check":"S3 lifecycle policy","status":"warning","note":"A large share of Standard objects have not been accessed recently."}
+]

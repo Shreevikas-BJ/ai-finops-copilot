@@ -1,0 +1,49 @@
+month,resource_id,service,owner,team,monthly_cost
+2026-04,i-0a1f2d3c4b5a6e01,EC2,Aisha Khan,DataTeam,400
+2026-05,i-0a1f2d3c4b5a6e01,EC2,Aisha Khan,DataTeam,420
+2026-04,i-0b2f3d4c5b6a7e02,EC2,Marco Ruiz,Platform,300
+2026-05,i-0b2f3d4c5b6a7e02,EC2,Marco Ruiz,Platform,310
+2026-04,i-0c3f4d5c6b7a8e03,EC2,Priya Shah,Analytics,280
+2026-05,i-0c3f4d5c6b7a8e03,EC2,Priya Shah,Analytics,285
+2026-04,i-0d4f5d6c7b8a9e04,EC2,Noah Williams,ML,185
+2026-05,i-0d4f5d6c7b8a9e04,EC2,Noah Williams,ML,190
+2026-04,i-0e5f6d7c8b9a0e05,EC2,Aisha Khan,DataTeam,760
+2026-05,i-0e5f6d7c8b9a0e05,EC2,Aisha Khan,DataTeam,780
+2026-04,i-0f6f7d8c9b0a1e06,EC2,Elena Park,DevOps,600
+2026-05,i-0f6f7d8c9b0a1e06,EC2,Elena Park,DevOps,620
+2026-04,i-0g7f8d9c0b1a2e07,EC2,Noah Williams,ML,520
+2026-05,i-0g7f8d9c0b1a2e07,EC2,Noah Williams,ML,540
+2026-04,i-0h8f9d0c1b2a3e08,EC2,Priya Shah,Analytics,350
+2026-05,i-0h8f9d0c1b2a3e08,EC2,Priya Shah,Analytics,360
+2026-04,vol-01a2b3c4d5e6f001,EBS,Aisha Khan,DataTeam,90
+2026-05,vol-01a2b3c4d5e6f001,EBS,Aisha Khan,DataTeam,92
+2026-04,vol-02b3c4d5e6f7a002,EBS,Marco Ruiz,Platform,64
+2026-05,vol-02b3c4d5e6f7a002,EBS,Marco Ruiz,Platform,66
+2026-04,vol-03c4d5e6f7a8b003,EBS,Noah Williams,ML,138
+2026-05,vol-03c4d5e6f7a8b003,EBS,Noah Williams,ML,140
+2026-04,vol-04d5e6f7a8b9c004,EBS,Elena Park,DevOps,47
+2026-05,vol-04d5e6f7a8b9c004,EBS,Elena Park,DevOps,48
+2026-04,vol-05e6f7a8b9c0d005,EBS,Priya Shah,Analytics,108
+2026-05,vol-05e6f7a8b9c0d005,EBS,Priya Shah,Analytics,110
+2026-04,db-finops-prod-01,RDS,Marco Ruiz,Platform,1810
+2026-05,db-finops-prod-01,RDS,Marco Ruiz,Platform,1850
+2026-04,db-analytics-warehouse,RDS,Priya Shah,Analytics,1220
+2026-05,db-analytics-warehouse,RDS,Priya Shah,Analytics,1250
+2026-04,db-ml-features-dev,RDS,Noah Williams,ML,940
+2026-05,db-ml-features-dev,RDS,Noah Williams,ML,970
+2026-04,nat-0a11b22c33d44e01,NAT Gateway,Marco Ruiz,Platform,180
+2026-05,nat-0a11b22c33d44e01,NAT Gateway,Marco Ruiz,Platform,330
+2026-04,nat-0b22c33d44e55f02,NAT Gateway,Elena Park,DevOps,105
+2026-05,nat-0b22c33d44e55f02,NAT Gateway,Elena Park,DevOps,175
+2026-04,nat-0c33d44e55f66a03,NAT Gateway,Aisha Khan,DataTeam,205
+2026-05,nat-0c33d44e55f66a03,NAT Gateway,Aisha Khan,DataTeam,210
+2026-04,s3-raw-data-prod,S3,Aisha Khan,DataTeam,920
+2026-05,s3-raw-data-prod,S3,Aisha Khan,DataTeam,960
+2026-04,s3-analytics-lake,S3,Priya Shah,Analytics,690
+2026-05,s3-analytics-lake,S3,Priya Shah,Analytics,720
+2026-04,s3-model-artifacts,S3,Noah Williams,ML,420
+2026-05,s3-model-artifacts,S3,Noah Williams,ML,440
+2026-04,s3-dev-build-artifacts,S3,Elena Park,DevOps,270
+2026-05,s3-dev-build-artifacts,S3,Elena Park,DevOps,285
+2026-04,s3-platform-logs,S3,Marco Ruiz,Platform,150
+2026-05,s3-platform-logs,S3,Marco Ruiz,Platform,160
