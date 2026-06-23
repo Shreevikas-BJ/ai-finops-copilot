@@ -326,21 +326,6 @@ Purpose:
 - The MVP is read-only and accepts no AWS credentials.
 - Uploaded data is parsed in memory and retained only in browser localStorage for the latest three datasets.
 
-## Screenshots
-
-Create a `docs/screenshots/` directory when you are ready to add portfolio images. Recommended captures:
-
-1. `dashboard.png` - 1440 × 1000, showing expandable KPI cards and the embedded Copilot.
-2. `findings.png` - filterable findings with evidence and recommended actions.
-3. `copilot.png` - one dataset-grounded answer with resource source chips.
-4. `report.png` - executive report with ticket-ready action items.
-
-Then embed them near the Product surfaces section with standard Markdown image links. Keep screenshots free of real API keys or customer cost data.
-
-## Resume bullet
-
-> Built a Vercel-ready AI FinOps action layer in Next.js and TypeScript that deterministically analyzes cloud cost, inventory, utilization, and optimization data, prioritizes 15 owner-aware savings findings, and uses Groq to generate grounded action plans and executive reports without exposing credentials or executing cloud changes.
-
 ## License
 
 This portfolio project is provided for demonstration and learning purposes.
